@@ -1,0 +1,5 @@
+install.packages("readr")
+library(readr)
+calendar <- read.csv("~/Downloads/calendar_airbnb.csv")
+listings <- read.csv("~/Downloads/listings_airbnb.csv")
+reviews  <- read.csv("~/Downloads/reviews_airbnb.csv")
