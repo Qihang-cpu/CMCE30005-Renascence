@@ -27,12 +27,9 @@ what question you are answering, why it matters, and what methods you plan to us
 
 | File | Description | Size |
 |------|-------------|------|
-| `listings_airbnb.csv` | detailed information on every active listing (~90 variables),
-including property attributes, host details, location, pricing, and review scores. | ~50 MB |
-| `reviews_airbnb.csv` | all guest reviews, including reviewer information and free-text
-comments. | ~200 MB |
-| `calendar_airbnb.csv` |daily availability and price data for each listing over the next
-365 days. | ~1 GB |
+| `listings_airbnb.csv` | detailed information on every active listing (~90 variables), including property attributes, host details, location, pricing, and review scores | ~50 MB |
+| `reviews_airbnb.csv` | all guest reviews, including reviewer information and free-text comments | ~200 MB |
+| `calendar_airbnb.csv` |daily availability and price data for each listing over the next 365 days. | ~1 GB |
 
 > **Note:** Data files are not committed to this repository due to size.
 > Download from: [insert download URL or instructions]
