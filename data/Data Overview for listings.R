@@ -7,7 +7,7 @@ grey   <- "#d8d8d4"   # background / "nothing to see here"
 red    <- "#e34948"   # errors and things to worry about
 
 # 1. Read your data
-listings <- read.csv("~/Downloads/listings_airbnb.csv", stringsAsFactors = FALSE, na.strings = c("NA", ""))
+listings <- read.csv("data/listings_airbnb.csv", stringsAsFactors = FALSE, na.strings = c("NA", ""))
 
 # rows, then columns
 dim(listings)          
