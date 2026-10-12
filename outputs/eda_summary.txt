@@ -1,0 +1,18 @@
+EDA summary 
+
+Listings (clean): 25,714 | bookable with price: 18,640
+Top LGA: Melbourne 8,366 listings (32.5%)
+Room type Entire home/apt: 18,817 (73.2%)
+Room type Private room: 6,614 (25.7%)
+Room type Shared room: 231 (0.9%)
+Room type Hotel room: 52 (0.2%)
+Median price Entire home/apt: $280 (per person $73, n=14,078)
+Median price Private room: $109 (per person $63, n=4,325)
+Median price Shared room: $50 (per person $27, n=196)
+Median price Hotel room: $324 (per person $110, n=41)
+Reviews 2019: 69,440 | 2025: 217,021 | ratio 3.1x
+Busiest months (2023-25): Mar, Oct, Nov, Dec
+Listings run by hosts with 2+ listings: 55.8%
+Median rating: 4.86 | share rated 4.85+: 52.7%
+Active in last 12 months: 75.8% of city-scrape listings
+Correlation log_price vs accommodates: 0.60 | vs dist_cbd_km: 0.02

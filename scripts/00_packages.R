@@ -1,35 +1,32 @@
 # ============================================================
 # CMCE30005 Business Analytics Challenge
 # Script: 00_packages.R
-# Purpose: Install and load all packages required for this project
-# Author: [Your team name]
-# Date: [Today's date]
+# Purpose: Install (if missing) and load all packages for this project
+# Author: Group 4 - Renascence
+# Run this ONCE at the start of a session, before any other script
 # ============================================================
 
-# Install packages (run once - comment out after installation)
-# install.packages(c(
-#   "tidyverse",    # Data manipulation and visualisation
-#   "lubridate",    # Date handling
-#   "janitor",      # Data cleaning utilities
-#   "skimr",        # Quick data summary
-#   "naniar",       # Missing data visualisation
-#   "corrplot",     # Correlation matrices
-#   "ggcorrplot",   # ggplot2-style correlation matrices
-#   "scales",       # Number formatting in plots
-#   "patchwork",    # Combining ggplot2 plots
-#   "knitr",        # Report generation
-#   "rmarkdown"     # R Markdown rendering
-# ))
+packages <- c(
+  "data.table",   # Fast reading of the big CSV files (fread)
+  "tidyverse",    # Data manipulation and visualisation (dplyr, ggplot2, tidyr ...)
+  "lubridate",    # Date handling
+  "janitor",      # Data cleaning utilities
+  "skimr",        # Quick data summary
+  "naniar",       # Missing data visualisation
+  "ggcorrplot",   # ggplot2-style correlation matrices
+  "scales",       # Number formatting in plots
+  "patchwork",    # Combining ggplot2 plots
+  "here",         # File paths relative to the project root
+  "knitr",        # Report generation
+  "rmarkdown"     # R Markdown rendering
+)
+
+# Install only the packages that are not installed yet
+missing <- packages[!vapply(packages, requireNamespace, logical(1), quietly = TRUE)]
+if (length(missing) > 0) install.packages(missing)
 
 # Load packages
-library(tidyverse)
-library(lubridate)
-library(janitor)
-library(skimr)
-library(naniar)
-library(ggcorrplot)
-library(scales)
-library(patchwork)
+invisible(lapply(packages, library, character.only = TRUE))
 
 # Session info (for reproducibility)
 sessionInfo()
