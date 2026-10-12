@@ -4,21 +4,16 @@
 # Purpose: Understand calendar_airbnb.csv before we clean or analyse it
 # Author: Group 4 - Renascence
 #
-# What this file is: one row per listing per day for the next ~12 months
-# after the scrape (16 June 2026). It tells us whether each night is
-# AVAILABLE (t) or NOT (f), plus the min/max nights rule on that day.
-#
 # IMPORTANT LIMITATION: "not available" mixes two things we cannot separate:
-#   (a) the night is BOOKED, and (b) the host BLOCKED the night.
+#   (a) the night is BOOKED, and 
+#   (b) the host BLOCKED the night.
 # So availability is a rough demand signal, not a clean occupancy rate.
-# This file has NO price column (Inside Airbnb removed it in 2024+ scrapes).
+# This file has NO price column.
 # ============================================================
 
 library(data.table)
 library(ggplot2)
 
-# (Re)load if missing - or if "Data Overview for listings.R" replaced listings
-# with a read.csv() data.frame, whose numeric IDs do not match the calendar
 if (!exists("calendar") || !exists("listings") || !is.data.table(listings)) source("data/dataimport.R")
 
 blue   <- "#2a78d6"
@@ -27,16 +22,16 @@ red    <- "#e34948"
 
 cal <- copy(calendar)
 
-# =============================================================================
-# STEP 1 - STRUCTURE
-# =============================================================================
 
-dim(cal)                       # 9.39 million rows, 5 columns
+# STEP 1 - STRUCTURE
+
+
+dim(cal)                      
 str(cal)
 head(cal)
 
-uniqueN(cal$listing_id)        # number of listings in the calendar
-range(cal$date)                # first and last day covered
+uniqueN(cal$listing_id)       
+range(cal$date)                
 
 # Every listing should have one row per day - check how many days each has
 days_per_listing <- cal[, .N, by = listing_id]
@@ -46,9 +41,8 @@ table(days_per_listing$N)
 # Any duplicate listing-day rows?
 sum(duplicated(cal, by = c("listing_id", "date")))
 
-# =============================================================================
+
 # STEP 2 - MISSING AND INVALID VALUES
-# =============================================================================
 
 colSums(is.na(cal))
 table(cal$available, useNA = "ifany")   # should only be "t" / "f"
@@ -64,9 +58,9 @@ cal[minimum_nights > 365, uniqueN(listing_id)]
 # maximum_nights of 1125 / 9999+ are Airbnb defaults ("no limit")
 cal[, .N, by = .(max_is_default = maximum_nights >= 1125)]
 
-# =============================================================================
+
 # STEP 3 - HOW AVAILABLE ARE LISTINGS?
-# =============================================================================
+
 
 # Overall share of listing-nights that are available
 cal[, mean(available)]
@@ -94,9 +88,9 @@ ggplot(listing_avail, aes(avail_rate)) +
        x = "Nights available (%)", y = "Number of listings") +
   theme_minimal()
 
-# =============================================================================
+
 # STEP 4 - AVAILABILITY OVER TIME
-# =============================================================================
+
 
 daily <- cal[, .(share_available = mean(available), n = .N), by = date]
 setorder(daily, date)
@@ -117,9 +111,9 @@ cal[, .(share_available = round(mean(available), 3)), by = weekday][order(share_
 cal[, month := format(date, "%Y-%m")]
 cal[, .(share_available = round(mean(available), 3)), by = month][order(month)]
 
-# =============================================================================
+
 # STEP 5 - DOES THE CALENDAR MATCH THE LISTINGS FILE?
-# =============================================================================
+
 
 # Listings in calendar but not in listings (and the reverse)
 length(setdiff(unique(cal$listing_id), listings$id))
@@ -131,12 +125,11 @@ check <- merge(listing_avail[, .(id = listing_id, avail_days = round(avail_rate 
 cor(check$avail_days, check$availability_365, use = "complete.obs")
 
 # =============================================================================
-# KEY TAKEAWAYS (results from the 16 June 2026 snapshot)
-# -----------------------------------------------------------------------------
-# * 25,728 listings x 365 days = 9.39 m rows (17 Jun 2026 - 30 Jun 2027).
+# KEY TAKEAWAYS:
+# * 25,728 listings x 365 days = 9.39 m rows 
 #   No missing values, no duplicate listing-days, every listing has 365 days.
 # * Every calendar listing is in listings.csv and vice versa (perfect match);
-#   our 365-day count matches availability_365 (r = 0.999).
+#   our 365-day count matches availability_365
 # * 45.5% of all listing-nights are available.
 # * 6,117 listings (23.8%) are NEVER available -> fully booked or switched off.
 #   676 listings (2.6%) are available every night -> no bookings at all.

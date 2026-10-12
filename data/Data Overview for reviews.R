@@ -3,11 +3,10 @@
 # Script: data/Data Overview for reviews.R
 # Purpose: Understand reviews_airbnb.csv before we clean or analyse it
 # Author: Group 4 - Renascence
-#
-# What this file is: one row per guest review, with the date and the
-# free-text comment. A review can only be left after a completed stay, so
-# the number of reviews over time is the best DEMAND proxy we have
-# (Inside Airbnb assumes roughly 1 review for every 2 stays).
+
+# one row per guest review, with the date and the
+# free-text comment. A review can only be left after a completed stay, so the number of reviews over time is the best DEMAND proxy 
+# we have (Inside Airbnb assumes roughly 1 review for every 2 stays).
 # ============================================================
 
 library(data.table)
@@ -22,11 +21,9 @@ orange <- "#eb6834"
 
 rv <- copy(reviews)
 
-# =============================================================================
 # STEP 1 - STRUCTURE
-# =============================================================================
 
-dim(rv)                         # ~1.03 million reviews, 6 columns
+dim(rv)                        
 str(rv)
 head(rv[, .(listing_id, date, reviewer_name, comments = substr(comments, 1, 60))])
 
@@ -34,12 +31,10 @@ uniqueN(rv$listing_id)          # listings with at least one review
 uniqueN(rv$reviewer_id)         # distinct guests
 range(rv$date)                  # first and last review date
 
-# =============================================================================
 # STEP 2 - MISSING, DUPLICATE AND UNUSUAL VALUES
-# =============================================================================
 
 colSums(is.na(rv))
-sum(duplicated(rv$id))                                   # duplicate review IDs
+sum(duplicated(rv$id))                                  
 sum(duplicated(rv, by = c("listing_id", "reviewer_id", "date")))  # same guest, same day
 
 # Automated messages: older Inside Airbnb files contain system-generated
@@ -62,9 +57,8 @@ rv[, mostly_ascii := !is.na(comments) &
        nchar(gsub("[^A-Za-z]", "", comments)) / pmax(n_char, 1) > 0.6]
 rv[, .N, by = mostly_ascii]
 
-# =============================================================================
+
 # STEP 3 - REVIEWS OVER TIME (DEMAND PROXY)
-# =============================================================================
 
 rv[, year  := as.integer(format(date, "%Y"))]
 rv[, month := as.integer(format(date, "%m"))]
@@ -123,21 +117,47 @@ mean(guest$N > 1)               # share of guests with 2+ reviews
 # =============================================================================
 # KEY TAKEAWAYS (results from the 16 June 2026 snapshot)
 # -----------------------------------------------------------------------------
-# * 1,026,690 reviews of 21,251 listings by 794,203 guests (Aug 2010 - Jun 2026).
-# * Only 41 comments missing; no duplicate review IDs; 150 same-guest-same-day
-#   repeats; no automated cancellation notes in this snapshot.
-# * Median comment = 146 characters; 18,689 comments are under 10 characters.
-# * ~3.6% of comments (36,880) are mostly non-English.
-# * Demand grew fast: 69.7k reviews in 2019 -> 217k in 2025 (3.1x); 2020-21
-#   COVID dip. 2026 is a partial year (to 28 June).
-# * Seasonality (2023-25): busiest Oct-Dec (9.3-10.0% of the year each) and
-#   Jan/Mar; quietest May-Jun (6.8-7.2%).
-# * Median listing has 17 reviews (90th pct 131, max 3,131). 4,477 listings
-#   (17%) have never been reviewed. 17.6% of guests reviewed 2+ times.
-# * All reviewed listings exist in listings.csv; our counts match
-#   number_of_reviews exactly (r = 1.00).
-# * Use: demand over time, seasonality, recency of bookings per listing,
-#   and free-text themes (cleanliness, location, host communication ...).
-# * Before text analysis: drop NA comments, automated cancellation notes,
-#   very short comments, and (if using English dictionaries) non-English text.
+# STRUCTURE
+# 1,026,690 reviews of 21,251 listings, written by 794,203 distinct guests.
+# Reviews run from 4 Aug 2010 to 28 Jun 2026 (2026 is a partial year).
+#
+# DATA QUALITY
+# Only 41 comments are missing (0.004%) - all other columns are complete.
+# No duplicate review IDs; 150 cases of the same guest reviewing the same
+#  isting on the same day (likely double submissions - minor).
+# No automated "host cancelled" messages in this snapshot.
+# Comment length: median 146 characters, mean 201, max 5,255.
+# 18,689 comments are under 10 characters ("Great!", ".") - little value
+#   for text analysis.
+# 36,880 comments (3.6%) are mostly non-English (Chinese, Korean, etc.).
+#
+# DEMAND OVER TIME (reviews = proxy for completed stays)
+# Strong growth: 69,662 reviews in 2019 -> 217,035 in 2025 (3.1x).
+# COVID collapse: 2020 fell 55% vs 2019 (31,126); recovery from 2022.
+# Yearly: 2022 = 105,689 | 2023 = 142,080 | 2024 = 182,317 | 2025 = 217,035.
+# 2026 has 114,799 reviews up to 28 June - do not compare it as a full year.
+#
+# SEASONALITY (average share of yearly reviews, 2023-2025)
+# Peak months: Nov 10.0%, Dec 9.9%, Oct 9.3%, Mar 9.2%, Jan 8.8%.
+# Quietest months: May 6.8%, Jun 7.2% (Melbourne winter).
+# An even spread would be 8.3% per month, so Nov is ~20% above average
+#  and May ~19% below.
+#
+# REVIEWS PER LISTING
+# Median 17 reviews per reviewed listing; mean 48.3 (heavily skewed).
+# 90th percentile 131, 99th percentile 393, maximum 3,131.
+# 4,477 listings (17.4% of all listings) have never been reviewed.
+# 17.6% of guests have written 2+ reviews (repeat Airbnb users).
+#
+# LINK TO LISTINGS FILE
+# Every reviewed listing exists in listings.csv (0 orphan reviews).
+# Our review counts match number_of_reviews exactly (correlation = 1.00).
+#
+# IMPLICATIONS FOR THE PROJECT
+# Reviews are the best DEMAND measure we have: use them for trends,
+#   seasonality and recent activity (reviews in the last 12 months).
+# A review is not a booking: not every guest leaves one, so treat counts
+#   as a relative measure, not exact occupancy.
+# Before text mining: drop missing comments, comments under 10 characters
+#   and non-English comments (all flagged in "Data cleaning .R").
 # =============================================================================

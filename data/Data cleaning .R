@@ -3,7 +3,7 @@
 # Script: data/Data cleaning .R
 # Purpose: Turn the three raw CSV files into clean, analysis-ready tables
 # Author: Group 4 - Renascence
-#
+
 # INPUT   data/listings_airbnb.csv, calendar_airbnb.csv, reviews_airbnb.csv
 # OUTPUT  data/processed/   (ignored by git - re-create by running this file)
 #           listings_clean.rds    one row per listing, cleaned + new features
@@ -13,13 +13,13 @@
 #           reviews_listing.rds   one row per listing, review/demand summary
 #           listings_master.rds   listings_clean + calendar + review summaries
 #         outputs/cleaning_log.txt  every rule and how many records it changed
-#
+
 # PRINCIPLES (same as "Data Overview for listings.R")
 #   * ERROR (impossible value)  -> set the cell to NA, keep the row
 #   * OUT OF SCOPE (not a short-stay listing) -> remove the row
 #   * OUTLIER (surprising but possible) -> keep it and FLAG it
 #   * Every rule is logged with the number of records it affected.
-#
+
 # The business problem is not fixed yet, so this file keeps everything that
 # could be useful and only removes what is clearly wrong. Analysis scripts
 # filter further for their own question.

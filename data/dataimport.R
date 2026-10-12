@@ -3,24 +3,6 @@
 # Script: data/dataimport.R
 # Purpose: Read the three Inside Airbnb files into R
 # Author: Group 4 - Renascence
-#
-# BEFORE RUNNING
-#   1. Open CMCE30005-Renascence.Rproj in RStudio (this sets the working
-#      directory to the project folder, so the relative paths below work).
-#   2. Put the three CSV files inside the data/ folder:
-#        data/listings_airbnb.csv   (~72 MB,  25,728 rows)
-#        data/calendar_airbnb.csv   (~378 MB, 9,390,720 rows)
-#        data/reviews_airbnb.csv    (~279 MB, 1,026,690 rows)
-#      The CSVs are listed in .gitignore, so they are never pushed to GitHub.
-#
-# WHY fread() AND NOT read.csv()
-#   data.table::fread() reads the 378 MB calendar in ~3 seconds; read.csv()
-#   takes minutes. fread() returns a data.table, which also works with dplyr.
-#
-# WHY READ THE ID COLUMNS AS TEXT
-#   Newer Airbnb IDs have 18-19 digits. Stored as numbers they lose precision
-#   (two different listings can end up with the same ID), so joins between
-#   the three files would silently break. Text keeps every digit.
 # ============================================================
 
 library(data.table)
