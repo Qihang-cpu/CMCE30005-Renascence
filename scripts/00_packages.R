@@ -3,7 +3,7 @@
 # Script: 00_packages.R
 # Purpose: Install (if missing) and load all packages for this project
 # Author: Group 4 - Renascence
-# Run this ONCE at the start of a session, before any other script.
+# Run this ONCE at the start of a session, before any other script
 # ============================================================
 
 packages <- c(
