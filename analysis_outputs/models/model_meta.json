@@ -1,0 +1,105 @@
+{
+  "winner": "Histogram Gradient Boosting",
+  "validation": {
+    "Log Ridge Regression": {
+      "MAE": 89.33594305160393,
+      "MedAE": 58.484164773105306,
+      "within25": 0.5561440677966102,
+      "RMSE": 156.84720128262197,
+      "R2": 0.2626557943797355
+    },
+    "Log Random Forest": {
+      "MAE": 85.47400672916204,
+      "MedAE": 51.14508019061303,
+      "within25": 0.600635593220339,
+      "RMSE": 152.3156814095163,
+      "R2": 0.30464599612934273
+    },
+    "Histogram Gradient Boosting": {
+      "MAE": 83.2664265482243,
+      "MedAE": 50.96103269155937,
+      "within25": 0.6202330508474576,
+      "RMSE": 152.51545703571657,
+      "R2": 0.3028207621174265
+    }
+  },
+  "test": {
+    "Global Median": {
+      "MAE": 94.4159313304721,
+      "MedAE": 63.81,
+      "within25": 0.5201716738197425,
+      "RMSE": 162.71951608816215,
+      "R2": -0.03375932885546362
+    },
+    "Area and Bedroom Median": {
+      "MAE": 77.30107939914163,
+      "MedAE": 49.11500000000001,
+      "within25": 0.6197424892703862,
+      "RMSE": 141.48719001036065,
+      "R2": 0.21841827430204575
+    },
+    "Selected Model": {
+      "MAE": 72.11475971958731,
+      "MedAE": 44.393367423024415,
+      "within25": 0.6618025751072961,
+      "RMSE": 134.49949945861482,
+      "R2": 0.2937125491179464
+    }
+  },
+  "split": [
+    5964,
+    1888,
+    2330
+  ],
+  "features": [
+    "bedrooms",
+    "accommodates",
+    "bath_num",
+    "minimum_nights",
+    "quote_nights",
+    "quote_lead",
+    "quote_weekend",
+    "Wifi",
+    "Kitchen",
+    "Free parking",
+    "Self check-in",
+    "Pool",
+    "Fireplace",
+    "Hot tub",
+    "Pets allowed",
+    "Workspace",
+    "BBQ",
+    "Garden",
+    "Air conditioning",
+    "area",
+    "property_group",
+    "quote_month"
+  ],
+  "nums": [
+    "bedrooms",
+    "accommodates",
+    "bath_num",
+    "minimum_nights",
+    "quote_nights",
+    "quote_lead",
+    "quote_weekend",
+    "Wifi",
+    "Kitchen",
+    "Free parking",
+    "Self check-in",
+    "Pool",
+    "Fireplace",
+    "Hot tub",
+    "Pets allowed",
+    "Workspace",
+    "BBQ",
+    "Garden",
+    "Air conditioning"
+  ],
+  "cats": [
+    "area",
+    "property_group",
+    "quote_month"
+  ],
+  "input_file": "/Users/sunqihang/CMCE30005-Renascence/analysis_outputs/tables/listings_prepared.csv"
+}
