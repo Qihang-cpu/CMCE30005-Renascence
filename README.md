@@ -68,16 +68,14 @@ Here will be our research questions that how we split our research problem step 
 
 **Reasons for variable selection:** Location and property type define comparable property groups. Bedrooms, guest capacity, bathrooms, and amenities support pricing. Reviews inform product positioning, while calendar data inform stay rules. Identifiers are used only to link datasets and are excluded from predictive features.
 
-# Data Understanding, Cleaning, and Exploration
+#### Data Understanding, Cleaning, and Exploration
 
 The data stage consisted of three main tasks:
 - Understanding the available datasets and their purposes.
 - Cleaning and preparing the data for analysis.
 - Exploring data quality and distributions to guide subsequent methods.
 
-## 1. Data Understanding
-
-### 1.1 Data Sources
+#### Data Sources
 
 The project used Melbourne Airbnb data from June 2026, consisting of three datasets:
 
@@ -87,40 +85,40 @@ The project used Melbourne Airbnb data from June 2026, consisting of three datas
 | reviews | One guest review | Property ID, review date, and review text | Review activity and accommodation experience themes |
 | calendar | One property on one date | Availability, minimum stay, and maximum stay | Analysis of stay requirements |
 
-### 1.2 Dataset Size and Linkage
+#### Dataset Size and Linkage
 
 - The listings dataset contained **25,728 properties and 90 variables**.
 - The reviews dataset contained **1,026,690 reviews**.
 - The datasets were linked using the property ID.
 
-### 1.3 Interpretation of the Data
+#### Interpretation of the Data
 
 - Listing prices do not necessarily represent actual transaction prices.
 - Review counts do not directly represent booking volumes.
 - Unavailable calendar dates do not necessarily indicate confirmed bookings.
 
-## 2. Data Cleaning and Preparation
+### 3.2 Data Cleaning and Preparation
 
-### 2.1 Property ID Checks
+#### Property ID Checks
 
 - Checked for missing and duplicate property IDs.
 - No missing or duplicate property IDs were found in this dataset.
 - The cleaning logic retains the most recently scraped record if duplicates exist.
 
-### 2.2 Price and Numeric Conversion
+#### Price and Numeric Conversion
 
 - Removed currency symbols and commas from price values.
 - Converted prices, bedroom counts, guest capacity, and other relevant fields into numeric values.
 - Extracted bathroom counts from bathroom descriptions.
 
-### 2.3 Date Processing
+#### Date Processing
 
 - Converted date fields into date formats.
 - Calculated:
   - The number of nights covered by each quotation.
   - The number of days between scraping and the quoted check-in date.
 
-### 2.4 Property and Amenity Classification
+#### Property and Amenity Classification
 
 - Grouped properties into four categories:
   - Apartments.
@@ -137,13 +135,13 @@ The project used Melbourne Airbnb data from June 2026, consisting of three datas
   - Gardens.
   - Air conditioning.
 
-### 2.5 Missing Value Treatment
+#### Missing Value Treatment
 
 - Missing prices were not replaced with zero.
 - Properties without prices remained available for supply analysis but were excluded from price modelling.
 - Other numeric values requiring imputation were handled within the model training pipeline to avoid data leakage.
 
-### 2.6 Review Preparation
+#### Review Preparation
 
 - Applied a consistent **365-day review window**, from **17 June 2025 to 16 June 2026**.
 - Aggregated review counts and theme mentions by property.
@@ -156,7 +154,7 @@ The project used Melbourne Airbnb data from June 2026, consisting of three datas
   - Work and business.
 - Theme measures captured keyword mentions only; they did not measure sentiment.
 
-### 2.7 Defining the Analysis Scope
+### 3.3 Defining the Analysis Scope
 
 The sample was progressively restricted to properties relevant to the business problem.
 
@@ -182,7 +180,7 @@ Two main analysis samples were established:
 - **10,182 properties** for comparable-price analysis and predictive modelling.
 
 
-### 2.8 Visualizations and Deliverables
+### 3.4 Visualizations and Deliverables
 
 Here will be a discription about the main charts and graphs we posted in the output.
 | Deliverable | Purpose |
@@ -196,9 +194,9 @@ Here will be a discription about the main charts and graphs we posted in the out
 | **Product recommendation cards** | Specify product features, launch prices and stay rules |
 | **30-day action plan** | Guide monitoring and price adjustments |
 
-## 3. Exploratory Data Analysis
+### 3.5  Exploratory Data Analysis (EDA)
 
-### 3.1 Missing Data Assessment
+#### Missing Data Assessment
 
 Missingness was assessed across the original property sample.
 
@@ -215,7 +213,7 @@ Implications:
 - Properties without prices could still contribute to supply analysis.
 - Price comparisons required valid price information.
 
-### 3.2 Price Distribution
+#### Price Distribution
 
 For properties with positive prices in the current city scrape of entire homes and apartments:
 
@@ -229,7 +227,7 @@ The distribution had a long right tail:
 - The median provided a more representative measure for market comparisons.
 - Subsequent analysis used medians and quartiles to describe comparable prices.
 
-### 3.3 Implications for Subsequent Analysis
+#### Implications for Subsequent Analysis
 
 - Comparable property groups were defined using:
   - Area.
@@ -239,7 +237,7 @@ The distribution had a long right tail:
 - These groupings reduced the influence of differences in property composition.
 - Market comparisons and modelling used explicitly defined samples.
 
-## 3.4. Outputs of the Data Stage
+### 3.6 Outputs of the Data Stage
 
 The data stage produced:
 
