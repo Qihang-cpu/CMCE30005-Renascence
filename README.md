@@ -745,33 +745,42 @@ Where:
 
 The minimum acceptable review activity is:
 
-\[
+$$
 R_i \geq \alpha R_{\text{ref}}
-\]
+$$
 
 With the current settings:
 
-\[
+$$
 R_i \geq 0.90 \times 16 = 14.4
-\]
+$$
 
 Where:
 
-- \(R_i\): Median annual review count for candidate \(i\).
-- \(R_{\text{ref}}\): Melbourne's comparable one-bedroom median annual review count.
-- \(\alpha\): Required proportion of the reference activity level.
+- $R_i$: Median annual review count for candidate $i$.
+- $R_{\text{ref}}$: Melbourne's comparable one-bedroom median annual review count.
+- $\alpha$: Required proportion of the reference activity level.
 
 The selection rule is:
 
-\[
-i_A^* =
-\arg\max_{i:\,E_i=1,\;R_i\geq\alpha R_{\text{ref}}}
+$$
+i_A^{*} =
+\underset{\substack{i:\ E_i=1 \\ R_i \geq \alpha R_{\text{ref}}}}
+{\operatorname{arg\,max}}
 M_i
-\]
+$$
 
-Where \(M_i\) is the candidate's median listing price.
+Where:
 
-- If median prices are tied, the code prioritises higher review activity.
+- $E_i$: Sample eligibility indicator defined above.
+- $M_i$: Median listing price for candidate $i$.
+- $i_A^{*}$: Selected candidate under Scenario A.
+
+Among eligible candidates that meet the review-activity threshold,
+select the candidate with the highest median listing price.
+
+If median listing prices are tied, prioritize the candidate
+with higher review activity.
 
 #### Scenario B: Review-Activity Objective
 
@@ -793,31 +802,42 @@ i_B^* =
 
 Define the allowable price set:
 
-\[
-G_i =
-\left\{
-10k :
-k \in \mathbb{Z},
-\quad
-P_{25,i} \leq 10k \leq P_{75,i}
-\right\}
-\]
+For candidate $i$, sample eligibility is:
 
-Select the trial price:
-
-\[
-p_i^* =
-\arg\min_{p \in G_i}
-\left|p-\hat{p}_i\right|
-\]
+$$
+E_i = \mathbf{1}\left(N_i \geq 100 \land H_i \geq 80 \land Q_i \geq 30\right)
+$$
 
 Where:
 
-- \(P_{25,i}\): 25th percentile of comparable two-night listing prices.
-- \(P_{75,i}\): 75th percentile of comparable two-night listing prices.
-- \(G_i\): Allowable AUD 10 price increments.
-- \(\hat{p}_i\): Model-predicted reference price.
-- \(p_i^*\): Selected trial price.
+- $E_i$: Sample eligibility indicator.
+- $N_i$: Number of comparable properties.
+- $H_i$: Number of comparable properties with sufficient review history.
+- $Q_i$: Number of comparable two-night quotations.
+- $\mathbf{1}(\cdot)$: Equals 1 when all conditions are satisfied and 0 otherwise.
+
+Define the allowable price set:
+
+$$
+G_i = \left\{10k : k \in \mathbb{Z},\quad P_{25,i} \leq 10k \leq P_{75,i}\right\}
+$$
+
+Select the trial price:
+
+$$
+p_i^{*} = \underset{p \in G_i}{\operatorname{arg\,min}} \left|p - \hat{p}_i\right|
+$$
+
+Where:
+
+- $P_{25,i}$: 25th percentile of comparable two-night listing prices.
+- $P_{75,i}$: 75th percentile of comparable two-night listing prices.
+- $G_i$: Set of prices in AUD 10 increments within the interquartile range.
+- $\hat{p}_i$: Model-predicted reference price, measured on the same two-night basis.
+- $p_i^{*}$: Selected trial price.
+
+The trial-price rule requires a non-empty allowable price set.
+If two prices are equally close to the reference price, select the lower price.
 
 This objective minimises the distance from the model prediction within market-based constraints. It does not maximise profit.
 
