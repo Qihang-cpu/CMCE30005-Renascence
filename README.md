@@ -68,7 +68,7 @@ Here will be our research questions that how we split our research problem step 
 
 **Reasons for variable selection:** Location and property type define comparable property groups. Bedrooms, guest capacity, bathrooms, and amenities support pricing. Reviews inform product positioning, while calendar data inform stay rules. Identifiers are used only to link datasets and are excluded from predictive features.
 
-#### Data Understanding, Cleaning, and Exploration
+### 3.1 Data Understanding, Cleaning, and Exploration
 
 The data stage consisted of three main tasks:
 - Understanding the available datasets and their purposes.
