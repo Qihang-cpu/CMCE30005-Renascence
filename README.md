@@ -317,27 +317,36 @@ The “existing four-person property” and “existing woodland property” are
 
 ### 4.6 Flowchart
 
+### 4.6 Flowchart
+
 ```mermaid
 flowchart TD
-    A["Business Problem"]
-    B["`Data Understanding
-    and Cleaning`"]
+    A["`Business
+Problem`"]
+    B["`Data
+Understanding
+and Cleaning`"]
     C["`Exploratory
-    Data Analysis`"]
-    D["`Descriptive Analytics
-    Understand market
-    differences`"]
-    E["`Predictive Analytics
-    Estimate reference
-    listing prices`"]
-    F["`Prescriptive Analytics
-    Apply objectives
-    and constraints`"]
-    G["Integrated Findings"]
+Data Analysis`"]
+    D["`Descriptive
+Analytics
+Understand
+market differences`"]
+    E["`Predictive
+Analytics
+Estimate reference
+listing prices`"]
+    F["`Prescriptive
+Analytics
+Apply objectives
+and constraints`"]
+    G["`Integrated
+Findings`"]
     H["`Recommendations
-    and Action Plan`"]
-    I["`Limitations and
-    Future Validation`"]
+and Action Plan`"]
+    I["`Limitations
+and Future
+Validation`"]
 
     A --> B
     B --> C
