@@ -764,10 +764,7 @@ Where:
 The selection rule is:
 
 $$
-i_A^{*} =
-\underset{\substack{i:\ E_i=1 \\ R_i \geq \alpha R_{\text{ref}}}}
-{\operatorname{arg\,max}}
-M_i
+i_A^{*} = \arg\max_{i:\,E_i=1,\;R_i \geq \alpha R_{\text{ref}}} M_i
 $$
 
 Where:
@@ -784,56 +781,50 @@ with higher review activity.
 
 #### Scenario B: Review-Activity Objective
 
-The selection rule is:
-
-\[
-i_B^* =
-\arg\max_{i:\,E_i=1} R_i
-\]
-
-- This rule applies to eligible two-bedroom candidates.
-- If review activity is tied, the code prioritises the higher median listing price.
-
-  **Trial Price Selection**
-
-- Restrict the price to the comparable two-night market's interquartile range.
-- Use price increments of **AUD 10**.
-- Select the allowable price closest to the gradient boosting prediction.
-
-Define the allowable price set:
-
-For candidate $i$, sample eligibility is:
+Select the eligible two-bedroom candidate with the highest median annual review count:
 
 $$
-E_i = \mathbf{1}\left(N_i \geq 100 \land H_i \geq 80 \land Q_i \geq 30\right)
+i_B^{*} = \arg\max_{i:\,E_i=1} R_i
 $$
 
 Where:
 
 - $E_i$: Sample eligibility indicator.
-- $N_i$: Number of comparable properties.
-- $H_i$: Number of comparable properties with sufficient review history.
-- $Q_i$: Number of comparable two-night quotations.
-- $\mathbf{1}(\cdot)$: Equals 1 when all conditions are satisfied and 0 otherwise.
+- $R_i$: Median annual review count for candidate $i$.
+- $i_B^{*}$: Selected candidate under Scenario B.
 
-Define the allowable price set:
+If review activity is tied, prioritize the candidate with the higher median listing price.
+
+  **Trial Price Selection**
+
+- Restrict the trial price to the comparable two-night market's interquartile range.
+- Use price increments of **AUD 10**.
+- Select the allowable price closest to the gradient boosting prediction.
+
+An allowable price $p$ must satisfy:
 
 $$
-G_i = \left\{10k : k \in \mathbb{Z},\quad P_{25,i} \leq 10k \leq P_{75,i}\right\}
+p = 10k,\quad k \in \mathbb{Z}
 $$
+
+$$
+P_{25,i} \leq p \leq P_{75,i}
+$$
+
+Let $G_i$ denote the set of prices satisfying both conditions.
 
 Select the trial price:
 
 $$
-p_i^{*} = \underset{p \in G_i}{\operatorname{arg\,min}} \left|p - \hat{p}_i\right|
+p_i^{*} = \arg\min_{p \in G_i} |p - \hat{p}_i|
 $$
 
 Where:
 
 - $P_{25,i}$: 25th percentile of comparable two-night listing prices.
 - $P_{75,i}$: 75th percentile of comparable two-night listing prices.
-- $G_i$: Set of prices in AUD 10 increments within the interquartile range.
-- $\hat{p}_i$: Model-predicted reference price, measured on the same two-night basis.
+- $G_i$: Allowable prices in AUD 10 increments within this range.
+- $\hat{p}_i$: Model-predicted reference price on the same two-night basis.
 - $p_i^{*}$: Selected trial price.
 
 The trial-price rule requires a non-empty allowable price set.
