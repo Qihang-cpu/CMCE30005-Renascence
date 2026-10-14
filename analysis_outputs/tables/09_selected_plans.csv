@@ -1,0 +1,4 @@
+﻿area,bedrooms,property_group,n,mature_n,median,p25,p75,reviews,active,model,matched_n,matched_median,matched_p25,matched_p75,used_fallback,launch
+Yarra,1,Apartment,253,192,232.0,200.0,270.0,17.0,0.93,248.53,137,237.0,207.49,268.5,False,250
+Melbourne,2,Apartment,1743,939,288.0,240.96,335.0,19.0,0.91,246.91,789,279.5,234.0,325.0,False,250
+Yarra Ranges,1,Cottage/Guesthouse,197,166,277.0,223.0,352.0,17.0,0.95,327.25,92,263.0,217.0,339.0,False,330
