@@ -1,6 +1,3 @@
-# CMCE30005-Renascence Project Plan 
-Our group is group 4
-
 # CMCE30005 Business Analytics Challenge
 ## Group4-Renascence - AIRBNB
 
@@ -433,7 +430,6 @@ Validation`"]
 - **Objective:** Identify differences in review topics and local amenity provision.
 
 - **Methods:**
-  - Match English theme keywords using regular expressions.
   - Calculate theme mentions as a proportion of non-empty reviews.
   - Calculate amenity availability as a proportion of entire properties.
   - Compare areas using grouped bar charts.
