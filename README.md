@@ -315,10 +315,6 @@ The “existing four-person property” and “existing woodland property” are
 
 ### 4.6 Flowchart
 
-### 4.6 Flowchart
-
-### 4.6 Flowchart
-
 ```mermaid
 flowchart TD
     A["`Business
