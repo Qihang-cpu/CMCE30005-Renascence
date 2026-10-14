@@ -707,27 +707,19 @@ Urban apartment candidates must satisfy the following conditions:
 | Properties with at least one year of review history | At least 80 |
 | Comparable two-night quotations | At least 30 |
 
-For candidate \(i\), sample eligibility is:
+For candidate $i$ within the four selected areas, sample eligibility is:
 
-\[
-E_i =
-\mathbf{1}
-\left(
-N_i \geq 100
-\land
-H_i \geq 80
-\land
-Q_i \geq 30
-\right)
-\]
+$$
+E_i = \mathbf{1}(N_i \geq 100 \land H_i \geq 80 \land Q_i \geq 30)
+$$
 
 Where:
 
-- \(E_i\): Sample eligibility indicator.
-- \(N_i\): Number of comparable properties.
-- \(H_i\): Number of comparable properties with sufficient review history.
-- \(Q_i\): Number of comparable two-night quotations.
-- \(\mathbf{1}(\cdot)\): Equals 1 when all conditions are satisfied, and 0 otherwise.
+- $E_i$: Sample eligibility indicator.
+- $N_i$: Number of comparable properties.
+- $H_i$: Number of comparable properties with at least one year of review history.
+- $Q_i$: Number of comparable two-night quotations.
+- $\mathbf{1}(\cdot)$: Equals 1 when all three sample requirements are satisfied and 0 otherwise.
 
   **Scenario-Based Product Selection**
 
