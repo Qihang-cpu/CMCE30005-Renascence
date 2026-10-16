@@ -959,13 +959,9 @@ The recommendations translate the analytical findings into three areas of action
 
 | Proposal | Product and Location | Initial Settings | Configuration Requirements | Immediate Actions |
 |---|---|---|---|---|
-| **A: Priority Urban Pilot** | Yarra one-bedroom entire apartment, 2 guests and 1 bathroom | **AUD 240/night; 2-night minimum** | Kitchen, WiFi, air conditioning, self check-in, and workspace; assumes no pool | Verify transport and walking routes; showcase a clean space for two and the check-in process |
-| **B: Conditional Four-Person Option** | Melbourne two-bedroom entire apartment, 4 guests and 1 bathroom | **AUD 250/night; 2-night minimum** | Kitchen, WiFi, air conditioning, and self check-in; assumes no pool | Emphasise two separate bedrooms, shared living space, and value through splitting costs among four guests |
-| **C: Conditional Specialty Property** | Yarra Ranges one-bedroom cottage/guest accommodation, 2 guests and 1 bathroom | **AUD 320/night; 2-night minimum** | Fireplace, free on-site parking, garden, kitchen, WiFi, air conditioning, and self check-in | Accurately showcase outdoor surroundings, views, the fireplace, and arrival experience; reassess pricing if the configuration differs |
-
-- Proposal A supports the urban small-property pilot objective.
-- Proposals B and C assume that the client already owns a suitable property; ownership and actual configuration must be verified.
-- These prices are initial trial quotations, not established current transaction prices or optimal prices.
+| **A: Melbourne Three-Bedroom Apartment** | Entire three-bedroom apartment in Melbourne; approximately **6 guests** | **AUD 410/night**; adjust for amenities and stay dates | Verify sleeping arrangements and guest capacity; maintain clean bedrooms, bathrooms and kitchen; service existing air conditioning | Approach suitable owners, compare operating costs, and showcase the three bedrooms, shared living space and actual amenities |
+| **B: Yarra One-Bedroom Apartment** | Entire one-bedroom apartment in Yarra; approximately **2 guests** | **AUD 230/night**; adjust for amenities and stay dates | Prepare a clean space for two; provide clear arrival and key-collection instructions; check existing appliances | Verify transport access, use accurate photos, clearly explain fees, and test the check-in process |
+| **C: Melbourne One-Bedroom Apartment** | Entire one-bedroom apartment in Melbourne; approximately **2 guests** | **AUD 220/night**; adjust for amenities and stay dates | Verify sleeping arrangements; maintain the bedroom, bathroom and kitchen; provide appliance instructions | Compare nearby one-bedroom listings, highlight the property's actual features, and clearly describe access and facilities |
 
 #### Recommended Property Options
 
