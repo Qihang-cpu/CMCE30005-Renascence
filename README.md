@@ -586,78 +586,80 @@ The amenity indicators covered:
 
 ### 6.4 Evaluation Methods and Results
 
-  **Evaluation Metrics**
+#### Evaluation Metrics
 
 - **MAE:** Average absolute difference between predicted and observed listing prices.
 - **MedAE:** Median absolute difference, representing a typical pricing error.
-- **RMSE:** An error measure that gives greater weight to large mistakes.
-- **R²:** Model fit relative to a mean-price benchmark.
-- **Within 25%:** Proportion of predictions differing from observed listing prices by no more than 25%.
+- **RMSE:** An error measure that gives greater weight to large prediction errors.
+- **R²:** Predictive performance relative to using the test-set mean price.
+- **Within 25%:** Percentage of predictions within 25% of observed listing prices.
 
-  **Baseline Comparisons**
+#### Baseline Comparisons
 
 The selected model was compared with:
 
-- **Overall median price:** Assign the same development-sample median price to every test property.
-- **Area-by-bedroom median:** Use the development-sample median for the same area and bedroom count, falling back to the overall median when necessary.
+- **Overall median price:** Apply the same development-sample median price to every test listing.
+- **Area-by-bedroom median:** Use the development-sample median for the same area and bedroom count, falling back to the overall median when no matching group is available.
 
-  **Test Results**
+Models were selected using validation-set MAE. The final evaluation used a separate test set, with hosts kept separate across training, validation, and test samples.
+
+#### Test Results
 
 | Method | MAE (AUD) | MedAE (AUD) | RMSE (AUD) | R² | Within 25% |
 |---|---:|---:|---:|---:|---:|
-| Overall median price | 106.62 | 76.00 | 173.73 | -0.031 | 45.1% |
-| Area-by-bedroom median | 84.37 | 56.50 | 143.74 | 0.294 | 56.4% |
-| Selected gradient boosting model | 75.71 | 49.18 | 133.11 | 0.395 | 62.8% |
+| Overall median price | 109.32 | 67.11 | 196.66 | -0.049 | 47.8% |
+| Area-by-bedroom median | 93.74 | 52.83 | 174.83 | 0.171 | 57.8% |
+| Selected gradient boosting model | **87.78** | **51.34** | **165.98** | **0.253** | **60.9%** |
 
-- The selected model improved on both simple pricing rules.
-- Approximately 63 out of 100 predictions were within 25% of observed listing prices.
-- The typical absolute difference remained approximately **AUD 49 per night**.
+- The selected model outperformed both baseline pricing methods.
+- Approximately **61 out of 100 predictions** were within 25% of observed listing prices.
+- The typical absolute pricing error remained approximately **AUD 51 per night**.
+- These results support using the model as an initial pricing reference, followed by checks against comparable listings.
 
-### 6.7 Model Interpretation
+### 6.5 Model Interpretation
 
 - Used **permutation importance** on the validation set.
 - Randomly shuffled one predictor at a time and measured the increase in MAE.
-- Used three repetitions to estimate average importance.
-- Important information included:
-  - Bedrooms.
-  - Area.
-  - Bathrooms.
-  - Quoted stay duration.
-  - Booking lead time.
-- Importance indicates predictive contribution, not the causal effect of changing a property feature.
+- Repeated the process **three times** to calculate average importance.
+- A larger increase in MAE indicates that the model relied more heavily on that predictor.
+- The model used property characteristics, location, amenities, and quotation conditions to estimate listing prices.
+- Feature importance describes predictive contribution; it does not show how much installing an amenity or changing a property feature would increase revenue.
+- The separate rating–revenue regression examines associations with estimated annual revenue and does not determine the pricing model’s feature importance.
 
-### 6.8 Candidate Price Predictions
+### 6.6 Candidate Price Predictions
 
-  **Standardised Quotation Scenario**
+#### Comparable Quotation Approach
 
-- June check-in.
-- Three-day lead time.
-- Weekday check-in.
-- Two-night stay.
-- Two-night minimum-stay setting.
-- Specified bedrooms, guest capacity, bathrooms, and amenities.
+- Focus on non-Superhost entire homes/apartments within the study scope.
+- Group comparable listings by **area, property type, and bedroom count**.
+- Select actual listings with a **two-night quoted stay** and a minimum-stay requirement of **no more than two nights**.
+- Retain each listing’s recorded guest capacity, bathrooms, amenities, quotation month, check-in day, and booking lead time.
+- Generate predictions for these listings and use the **median predicted price within each product group** as its model reference price.
+- A two-night quotation provides a comparison basis; it does not prescribe a two-night minimum stay for clients.
 
-  **Product Configuration**
+#### Product Configuration
 
-- Urban apartments included kitchen, WiFi, air conditioning, and self check-in.
-- Urban scenarios assumed no pool, hot tub, or fireplace.
-- Woodland scenarios additionally specified a fireplace, free on-site parking, and a garden.
-- Remaining amenities followed the majority status among local comparable properties.
+- Use the characteristics of actual comparable listings rather than an invented client property.
+- Report guest capacity as a reference based on the product group, subject to confirmation for the actual property.
+- Do not assume that every apartment has air conditioning, self check-in, or other amenities.
+- Recalculate the price reference once a client’s actual property and intended stay dates are known.
 
-  **Example Predictions**
+#### Example Predictions
 
 | Candidate Product | Model Reference Price (AUD/Night) |
 |---|---:|
-| Yarra one-bedroom apartment for two guests | 238.0 |
-| Melbourne two-bedroom apartment for four guests | 247.2 |
-| Yarra Ranges one-bedroom cottage/guest accommodation for two guests | 322.4 |
+| Melbourne three-bedroom apartment; approximately six guests | **414.2** |
+| Yarra one-bedroom apartment; approximately two guests | **230.7** |
+| Melbourne one-bedroom apartment; approximately two guests | **220.0** |
 
-- Predictions were generated for the wider candidate set before final selection.
-- These examples subsequently supported the selected scenarios.
-- Model predictions were passed to prescriptive analysis alongside comparable-price distributions.
-- They were not automatically treated as final launch prices.
+- Predictions were generated for the wider candidate set before the final product selection.
+- Product selection combined sample-size requirements, independent host counts, review history, and review activity.
+- Model reference prices were passed to prescriptive analysis alongside comparable-price distributions.
+- Final trial prices were selected in **AUD 10 increments** within each group’s **25th–75th percentile price range**, choosing the available price closest to the model reference.
+- This produced initial trial prices of **AUD 410, AUD 230, and AUD 220 per night**, respectively.
 
-### 6.9 Outputs and Limitations
+
+### 6.7 Outputs and Limitations
 
 - **Outputs:**
   - An evaluated reference-pricing model.
