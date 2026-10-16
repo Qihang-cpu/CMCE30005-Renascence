@@ -919,34 +919,37 @@ Therefore, **Yarra's preferred status follows from a rule-based comparison under
 
 ### 8.2 Three Final Proposals
 
-| Proposal | Location and Product | Initial Trial Price | Minimum Stay | Product Positioning |
-|---|---|---:|---|---|
-| **A: Priority Urban Pilot** | Yarra one-bedroom apartment for two guests | **AUD 240/night** | 2 nights | Space for two, convenience, and self check-in |
-| **B: Conditional Four-Person Option** | Melbourne two-bedroom apartment for four guests | **AUD 250/night** | 2 nights | Separate bedrooms, shared space, and value through shared costs |
-| **C: Conditional Specialty Property** | Yarra Ranges one-bedroom cottage/guest accommodation for two guests | **AUD 320/night** | 2 nights | Natural surroundings and holiday amenities such as a fireplace, parking, and a garden |
+For small operators without Superhost status, we recommend the following property options for initial consideration.
 
-- **Proposal A** is the preferred option under the current urban small-property objective.
-- **Proposal B** applies if the client already owns a suitable four-person property.
-- **Proposal C** applies if the client already owns a property in the area and its actual configuration meets the requirements.
-- The data do not establish that the client owns the properties required for Proposals B or C.
+| Proposal | Location and Product | Initial Trial Price | Minimum Stay | Product Positioning |
+|---|---|---|---|---|
+| **A: Melbourne Three-Bedroom Option** | Entire three-bedroom apartment in Melbourne; approximately **6 guests** | **AUD 410/night** | Set according to turnover costs and comparable listings | Three separate bedrooms and shared living space for families or groups |
+| **B: Yarra One-Bedroom Option** | Entire one-bedroom apartment in Yarra; approximately **2 guests** | **AUD 230/night** | Set according to turnover costs and comparable listings | A comfortable space for two, with clear arrival and check-in arrangements |
+| **C: Melbourne One-Bedroom Option** | Entire one-bedroom apartment in Melbourne; approximately **2 guests** | **AUD 220/night** | Set according to turnover costs and comparable listings | A compact urban stay for two, with accurately presented amenities and transparent fees |
+
+- **Clients without a property:** use these options to approach owners and compare available properties, management arrangements, and operating costs.
+- **Clients with a matching property:** confirm its capacity and amenities, then adjust the starting price for the intended stay dates.
+- **Clients with other properties:** match nearby competitors by location, property type, bedroom count, and guest capacity to develop a suitable pricing plan.
 
 ### 8.3 Final Assessment of the Pricing Tool
 
-**The model can improve initial pricing, but comparable-market checks and manual review remain necessary.**
+**The selected gradient boosting model provides an initial pricing reference, supported by comparable listings and property-specific checks.**
 
-- Approximately **62.8%** of the selected model's test predictions were within 25% of observed listing prices, compared with **56.4%** for the area-by-bedroom median rule.
-- The median absolute error remained approximately **AUD 49 per night**.
-- Therefore, AUD 240, AUD 250, and AUD 320 are **trial prices requiring validation**, not established transaction prices or profit-maximising prices.
+- Approximately **60.9%** of its test predictions were within **25%** of observed listing prices, compared with **57.8%** for the area-by-bedroom median method.
+- The median absolute prediction error was approximately **AUD 51 per night**.
+- The recommended starting prices are **AUD 410, AUD 230, and AUD 220 per night**, adjusted to reflect actual amenities and stay dates.
+- The two-night stay used for price comparison does not require every property to adopt a two-night minimum.
 
 ### 8.4 Final Action Recommendations
 
-- **Before launch:** Verify the actual property, amenities, costs, and comparable listings for the same dates to confirm that the proposal applies.
-- **Initial launch:** Use the corresponding trial price and a two-night minimum stay, supported by photographs and descriptions consistent with the product positioning.
-- **Weeks 2–3:** Monitor exposure, views, enquiries, and booking conversion; test price changes individually under comparable date conditions.
-- **Week 4:** Review actual bookings, cancellations, variable costs, and net contribution per available night to decide whether to continue, adjust prices, or revise the product.
+- **Before launch:** identify a suitable property, confirm guest capacity and operating costs, and compare competing listings for the same stay dates.
+- **Listing preparation:** use accurate photos, describe the layout and amenities clearly, disclose all fees, and provide simple arrival, key-collection, and appliance instructions.
+- **Cleaning and service:** thoroughly clean bedrooms, bathrooms, and kitchens between stays, verify standards with a checklist, respond promptly to guests, and address recurring complaints first.
+- **Air conditioning:** clean and service existing units and advertise them accurately. Assess installation where guest demand, comparable properties, and installation costs justify it.
+- **Weeks 2–3:** monitor views, enquiries, bookings, and guest feedback. Test one pricing or service change at a time.
+- **Week 4:** review bookings, cancellations, income, and operating expenses to decide whether to retain or adjust the price and operating plan.
 
-One thing we have to admit:
-**The project's final deliverable is an evidence-supported rental proposal with transparent rules that can be tested operationally. Its business performance must still be validated using actual bookings and costs; it does not establish property investment rankings or profit maximisation.**
+**The final recommendation combines property selection, initial pricing, and practical service improvements. Clients can use the three proposed products to explore management opportunities or apply the same pricing and operational approach to their existing properties.**
 
 
 ---
