@@ -1172,7 +1172,7 @@ The model's ability to match listing prices evaluates the pricing tool only. **T
 - The notebook also supports standard filenames such as `listings.csv.gz` or `listings.csv`.
 - Files named `listings_airbnb.csv`, `reviews_airbnb.csv`, and `calendar_airbnb.csv` require renaming or an update to the file-loading function.
 - Install the recorded package versions and run the notebook cells in order.
-- Maps, the Chinese font subset, and its licence are embedded in the notebook.
+- Maps and its licence are embedded in the notebook.
 - Generated figures, tables, and supporting files are saved under `analysis_outputs_v3`.
 - Replacing the source snapshot may change the results and requires updating the written conclusions.
 
