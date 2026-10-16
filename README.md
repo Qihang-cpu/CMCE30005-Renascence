@@ -67,6 +67,8 @@ Here will be our research questions that how we split our research problem step 
 
 ### 3.1 Data Understanding, Cleaning, and Exploration
 
+**Our research focuses on small operators, so we include only non-Superhost listings. Given Airbnb’s demanding Superhost requirements, we assume that certified hosts already have strong property management skills and less need for our advisory services.**
+
 The data stage consisted of three main tasks:
 - Understanding the available datasets and their purposes.
 - Cleaning and preparing the data for analysis.
@@ -964,6 +966,34 @@ The recommendations translate the analytical findings into three areas of action
 - Proposal A supports the urban small-property pilot objective.
 - Proposals B and C assume that the client already owns a suitable property; ownership and actual configuration must be verified.
 - These prices are initial trial quotations, not established current transaction prices or optimal prices.
+
+#### Recommended Property Options
+
+- **Melbourne: three-bedroom apartment**
+  - Guest capacity: approximately 6 people.
+  - Initial price: **AUD 410 per night**.
+
+- **Yarra: one-bedroom apartment**
+  - Guest capacity: approximately 2 people.
+  - Initial price: **AUD 230 per night**.
+
+- **Melbourne: one-bedroom apartment**
+  - Guest capacity: approximately 2 people.
+  - Initial price: **AUD 220 per night**.
+
+#### Property Selection and Pricing
+
+- Adjust starting prices based on amenities and intended stay dates.
+- **Clients without a property:** approach owners of the recommended property types and compare management fees and operating costs.
+- **Clients with other properties:** set prices using nearby listings with similar property types and guest capacities.
+
+#### Operational Improvements
+
+- **Cleaning:** thoroughly clean bedrooms, bathrooms and kitchens between stays, and verify standards using a checklist.
+- **Listing accuracy:** provide realistic photos and clear descriptions of layouts, fees and amenities.
+- **Check-in:** provide simple instructions for arrival, key collection and appliance use.
+- **Communication:** respond promptly to guests and prioritise recurring complaints.
+- **Air conditioning:** clean and service existing units and clearly advertise them. Consider installation based on guest demand, comparable properties and costs.
 
 ### 9.2 30-Day Action Plan
 
