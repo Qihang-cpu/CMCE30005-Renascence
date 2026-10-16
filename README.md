@@ -845,40 +845,53 @@ This objective minimises the distance from the model prediction within market-ba
 
 ### 7.4 Results
 
-  **Selected Products and Prices**
+#### Selected Products and Prices
 
 | Scenario | Product and Location | Model Reference Price (AUD/Night) | Trial Price (AUD/Night) | Minimum Stay |
 |---|---|---:|---:|---|
-| **A: Urban pilot** | Yarra one-bedroom apartment for two guests | 238.0 | **240** | 2 nights |
-| **B: Conditional four-person option** | Melbourne two-bedroom apartment for four guests | 247.2 | **250** | 2 nights |
-| **C: Conditional woodland option** | Yarra Ranges one-bedroom cottage/guest accommodation for two guests | 322.4 | **320** | 2 nights |
+| **A: Melbourne Three-Bedroom Option** | Entire three-bedroom apartment in Melbourne; approximately six guests | 414.2 | **410** | Set according to turnover costs and comparable listings |
+| **B: Yarra One-Bedroom Option** | Entire one-bedroom apartment in Yarra; approximately two guests | 230.7 | **230** | Set according to turnover costs and comparable listings |
+| **C: Melbourne One-Bedroom Option** | Entire one-bedroom apartment in Melbourne; approximately two guests | 220.0 | **220** | Set according to turnover costs and comparable listings |
 
-  **Comparable-Market Price Constraints**
+#### Comparable-Market Price Constraints
 
-| Scenario | Two-Night Comparables | 25th Percentile (AUD) | Median (AUD) | 75th Percentile (AUD) | Trial Price (AUD) |
+Prices below are nightly rates from comparable two-night quotations.
+
+| Scenario | Two-Night Comparables | 25th Percentile (AUD/Night) | Median (AUD/Night) | 75th Percentile (AUD/Night) | Trial Price (AUD/Night) |
 |---|---:|---:|---:|---:|---:|
-| A | 137 | 207.49 | 237.00 | 268.50 | 240 |
-| B | 789 | 234.00 | 279.50 | 325.00 | 250 |
-| C | 92 | 217.00 | 263.00 | 339.00 | 320 |
+| A | 112 | 347.3 | 421.0 | 499.1 | **410** |
+| B | 66 | 216.4 | 237.0 | 262.1 | **230** |
+| C | 333 | 190.5 | 219.0 | 248.5 | **220** |
 
 #### Conclusions
 
-- **Yarra is the preferred urban pilot:**
-  - It meets the sample and review-activity requirements.
-  - It has the highest median listing price among eligible one-bedroom candidates.
+- **Melbourne three-bedroom apartments rank first under the selection rules:**
+  - The group contains **240 listings**, **121 independent hosts**, and **151 listings with at least one year of review history**.
+  - The median annual review count in the history-qualified sample is **11**.
+  - The recommended initial trial price is **AUD 410 per night**.
 
-- **Melbourne provides the four-person market reference:**
-  - It has the highest median annual review count among eligible two-bedroom candidates.
+- **Yarra one-bedroom apartments provide a second option:**
+  - The group contains **111 listings**, **80 independent hosts**, and **66 listings with at least one year of review history**.
+  - The median annual review count in the history-qualified sample is **11**.
+  - The recommended initial trial price is **AUD 230 per night**.
 
-- **The Yarra Ranges recommendation is conditional:**
-  - It depends on the assumed property location and specified amenities.
-  - It does not establish that Yarra Ranges offers the highest investment return.
+- **Melbourne one-bedroom apartments provide a third option:**
+  - The group contains **961 listings**, **387 independent hosts**, and **589 listings with at least one year of review history**.
+  - The median annual review count in the history-qualified sample is **10**.
+  - The recommended initial trial price is **AUD 220 per night**.
 
-- **The urban selection is stable within the tested activity thresholds of 75%–100%.**
-  - At 110%, no candidate qualifies.
+- **The same three products remain selected under the relaxed, main, and stricter sample requirements.**
+  - Under the largest-sample requirements, Yarra one-bedroom apartments no longer qualify, and Melbourne two-bedroom apartments enter the top three.
 
 - **All three trial prices satisfy the comparable-market price constraints.**
-  - They remain starting points for operational testing.
+  - Each price falls within its product group’s 25th–75th percentile range.
+  - Prices are selected in AUD 10 increments, choosing the available price closest to the model reference.
+  - The two-night comparison does not impose a two-night minimum stay.
+
+- **The recommendations support clients with different property situations.**
+  - Clients without a property can use the three options to identify potential management opportunities.
+  - Clients with other properties can apply the same comparable-listing approach to establish their own starting prices.
+  - Selection ranks opportunities for further assessment; it does not establish which property will generate the highest profit.
 
 ### 7.5 Limitations
 
