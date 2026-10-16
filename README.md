@@ -472,7 +472,31 @@ Validation`"]
   - Unavailable dates do not necessarily indicate bookings.
   - Monthly patterns were described, not forecast.
 
-### 5.7 Outputs
+### 5.7 D6: Ratings and Estimated Annual Revenue
+
+- **Objective:** Examine whether guest ratings are associated with estimated annual revenue after accounting for property differences.
+
+- **Methods:**
+  - Use **multiple log-linear regression**.
+  - Set `log(1 + estimated annual revenue)` as the dependent variable and overall guest rating as the main predictor.
+  - Control for area, property type, bedroom count, and guest capacity.
+  - Analyse **7,750 listings** and calculate standard errors clustered across **3,868 hosts**.
+
+- **Key findings:**
+  - The rating coefficient was **2.463**, with a **95% confidence interval of 1.952–2.973** and **p < 0.001**.
+  - The model explained approximately **9.39%** of the variation in log-transformed estimated revenue.
+
+  This means: **Higher ratings were significantly associated with higher estimated annual revenue after controlling for the included property characteristics.**
+
+
+- **Implication:** Guest ratings are a relevant operational indicator, but the model’s limited explanatory power means they should be considered alongside other factors when assessing revenue.
+
+- **Limitations:**
+  - Estimated annual revenue represents neither actual income nor profit.
+  - The positive association does not establish that improving ratings causes revenue growth.
+  - The analysis does not establish a relationship between ratings and nightly listing prices.
+
+### 5.8 Outputs
 
 - Urban apartment candidates for further evaluation.
 - Review-activity benchmarks.
