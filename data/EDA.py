@@ -1,477 +1,548 @@
-# ==================== Install missing packages ====================
-
-import importlib.util
-import subprocess
-import sys
-
-packages = {
-    'pandas': 'pandas',
-    'numpy': 'numpy',
-    'matplotlib': 'matplotlib',
-    'IPython': 'ipython'
-}
-
-missing_packages = [
-    package_name
-    for module_name, package_name in packages.items()
-    if importlib.util.find_spec(module_name) is None
-]
-
-if missing_packages:
-    subprocess.check_call([
-        sys.executable,
-        '-m',
-        'pip',
-        'install',
-        *missing_packages
-    ])
-
 # ==================== Import packages ====================
 
 from pathlib import Path
+import sys
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from IPython.display import display
+
+# ==================== Locate the project directory ====================
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+
+# Support scripts stored in analysis_process, data, or the project root.
+PROJECT_DIR = (
+    SCRIPT_DIR.parent
+    if SCRIPT_DIR.name in ["analysis_process", "data"]
+    else SCRIPT_DIR
+)
+
+MODULE_DIR = PROJECT_DIR / "data"
+
+preparation_path = MODULE_DIR / "Graph_preparation.py"
+
+if not preparation_path.is_file():
+    raise FileNotFoundError(
+        f"Preparation file not found: {preparation_path}"
+    )
+
+if str(MODULE_DIR) not in sys.path:
+    sys.path.insert(0, str(MODULE_DIR))
 
 
-# ==================== Set output folders ====================
+# ==================== Import plotting preparation ====================
 
-OUT = Path('analysis_outputs_v3')
-F = OUT / 'figures'
-T = OUT / 'tables'
+import Graph_preparation as prep
+
+
+# ==================== Set output directories ====================
+
+OUT = PROJECT_DIR / "analysis_outputs"
+F = OUT / "figures"
+T = OUT / "tables"
 
 for folder in [OUT, F, T]:
     folder.mkdir(parents=True, exist_ok=True)
 
-pd.set_option('display.max_columns', 18)
-pd.set_option('display.max_rows', 30)
-
-
-# ==================== Define chart colors and styles ====================
-
-NAVY = '#183C4A'
-TEAL = '#168A85'
-GOLD = '#D58A39'
-MUTED = '#617580'
-
-plt.rcParams.update({
-    'font.family': 'DejaVu Sans',
-    'font.size': 11,
-    'axes.unicode_minus': False,
-    'axes.spines.top': False,
-    'axes.spines.right': False,
-    'axes.spines.left': False,
-    'axes.edgecolor': '#C5D1D4',
-    'axes.labelcolor': MUTED,
-    'xtick.color': MUTED,
-    'ytick.color': NAVY,
-    'text.color': NAVY,
-    'figure.facecolor': 'white',
-    'axes.facecolor': 'white',
-    'savefig.facecolor': 'white'
-})
-
-
-# ==================== Define helper functions ====================
-
-def locate_listings():
-    """Find the listings file in common project folders."""
-    folders = [
-        Path('.'),
-        Path('data'),
-        Path('../upload'),
-        Path('upload'),
-        Path('/content')
-    ]
-
-    filenames = [
-        'listings (1).csv.gz',
-        'listings.csv.gz',
-        'listings.csv'
-    ]
-
-    for folder in folders:
-        for filename in filenames:
-            candidate = folder / filename
-
-            if candidate.is_file():
-                return candidate
-
-    raise FileNotFoundError(
-        'Listings file not found. Place listings (1).csv.gz, '
-        'listings.csv.gz, or listings.csv in the notebook folder '
-        'or the data folder.'
-    )
-
-
-def done(fig, name):
-    """Save and display a chart."""
-    fig.savefig(
-        F / f'{name}.png',
-        dpi=165,
-        bbox_inches='tight'
-    )
-    plt.show()
-    plt.close(fig)
-
-
-def horizontal(labels, values, title, unit='', fmt=None):
-    """Create a horizontal bar chart with value labels."""
-    values = np.asarray(values, dtype=float)
-
-    fig, ax = plt.subplots(figsize=(9.2, 4.3))
-
-    bars = ax.barh(
-        list(labels),
-        values,
-        color=TEAL,
-        height=0.58
-    )
-
-    ax.invert_yaxis()
-    ax.set_title(
-        title,
-        loc='left',
-        fontweight='bold',
-        pad=18
-    )
-    ax.set_xlabel(unit)
-    ax.grid(axis='x', alpha=0.14)
-    ax.set_axisbelow(True)
-    ax.tick_params(axis='y', length=0, pad=10)
-
-    maximum = float(values.max()) if len(values) else 0
-    scale = maximum if maximum > 0 else 1
-
-    ax.set_xlim(0, scale * 1.24)
-
-    for bar, value in zip(bars, values):
-        label = fmt(value) if fmt else f'{value:,.0f}'
-
-        ax.text(
-            value + scale * 0.025,
-            bar.get_y() + bar.get_height() / 2,
-            label,
-            va='center',
-            fontweight='bold',
-            fontsize=11
-        )
-
-    fig.tight_layout()
-    return fig
-
-
-# ==================== Load the listings dataset ====================
-
-listing_path = locate_listings()
-raw = pd.read_csv(listing_path, low_memory=False)
-
-required_columns = [
-    'id',
-    'last_scraped',
-    'price',
-    'bedrooms',
-    'accommodates',
-    'minimum_nights',
-    'latitude',
-    'longitude',
-    'neighbourhood_cleansed',
-    'bathrooms_text',
-    'price_quote_checkin_date',
-    'price_quote_checkout_date',
-    'source',
-    'room_type'
-]
-
-missing_columns = [
-    column
-    for column in required_columns
-    if column not in raw.columns
-]
-
-if missing_columns:
+if Path(prep.OUT).resolve() != OUT.resolve():
     raise ValueError(
-        'The listings file is missing columns required by the '
-        f'original notebook: {missing_columns}'
+        "Graph_preparation.py uses a different output directory. "
+        f"Expected: {OUT}"
     )
 
-print(f'Loaded file: {listing_path}')
-print(f'Original listings: {len(raw):,}')
-print(f'Original variables: {raw.shape[1]:,}')
+export_table = prep.export_table
+show_table = prep.show_table
+horizontal = prep.horizontal
+done = prep.done
+
+TEAL = prep.TEAL
+GOLD = prep.GOLD
+GRAY = prep.GRAY
 
 
-# ==================== Prepare variables for EDA ====================
+# ==================== Load prepared datasets ====================
 
-# Remove missing listing IDs.
-l = raw.dropna(subset=['id']).copy()
+current = prep.current.copy()
+c = prep.c.copy()
+e = prep.e.copy()
+q = prep.q.copy()
 
-# Keep the latest record if a listing ID appears more than once.
-l['_scraped_order'] = pd.to_datetime(
-    l['last_scraped'],
-    errors='coerce'
-)
-
-l = (
-    l.sort_values('_scraped_order', kind='stable')
-    .drop_duplicates('id', keep='last')
-    .sort_index()
-    .drop(columns='_scraped_order')
-)
-
-# Convert price strings to numeric AUD values.
-l['price_aud'] = pd.to_numeric(
-    l['price']
-    .astype('string')
-    .str.replace(r'[$,]', '', regex=True),
-    errors='coerce'
-)
-
-numeric_columns = [
-    'bedrooms',
-    'accommodates',
-    'minimum_nights',
-    'latitude',
-    'longitude'
-]
-
-for column in numeric_columns:
-    l[column] = pd.to_numeric(l[column], errors='coerce')
-
-l['area'] = l['neighbourhood_cleansed']
-
-# Extract the number of bathrooms from the bathroom description.
-bathroom_text = l['bathrooms_text'].astype('string')
-
-l['bath_num'] = pd.to_numeric(
-    bathroom_text.str.extract(r'(\d+(?:\.\d+)?)')[0],
-    errors='coerce'
-)
-
-l.loc[
-    bathroom_text.str.contains(
-        'half-bath',
-        case=False,
-        na=False
-    ),
-    'bath_num'
-] = 0.5
-
-# Calculate the stay length and booking lead time of each price quote.
-checkin = pd.to_datetime(
-    l['price_quote_checkin_date'],
-    errors='coerce'
-)
-
-checkout = pd.to_datetime(
-    l['price_quote_checkout_date'],
-    errors='coerce'
-)
-
-scraped = pd.to_datetime(
-    l['last_scraped'],
-    errors='coerce'
-)
-
-l['quote_nights'] = (checkout - checkin).dt.days
-l['quote_lead'] = (checkin - scraped).dt.days
-
-if l.empty:
-    raise ValueError('No listings remain after checking listing IDs.')
+# current: all listings from the current city scrape.
+# c: confirmed non-Superhost listings from the current city scrape.
+# e: non-Superhost entire-home supply sample.
+# q: price-analysis and prediction sample.
 
 
-# ==================== Define the analysis samples ====================
+# ==================== Validate EDA inputs ====================
 
-# Use listings collected in the current city scrape.
-c = l.loc[l['source'].eq('city scrape')].copy()
-
-if c.empty:
-    raise ValueError(
-        'No records have source = "city scrape". '
-        'Check whether you are using the same dataset as the notebook.'
-    )
-
-# Use entire-home listings for the price distribution.
-e = c.loc[c['room_type'].eq('Entire home/apt')].copy()
-
-if e.empty:
-    raise ValueError('No entire-home listings were found.')
-
-# Apply the original notebook's mainstream short-stay criteria.
-q = e.loc[
-    e['price_aud'].between(20, 2000)
-    & e['bedrooms'].between(1, 3)
-    & e['accommodates'].between(1, 8)
-    & e['minimum_nights'].between(1, 7)
-    & e['quote_nights'].between(1, 7)
-    & e['quote_lead'].between(0, 30)
-].copy()
-
-if q.empty:
-    raise ValueError(
-        'No listings meet the short-stay comparison criteria. '
-        'Check the price, quote dates, and stay-length variables.'
-    )
-
-sample_overview = pd.DataFrame({
-    'Sample': [
-        'Unique listings',
-        'Current city scrape',
-        'Entire-home listings',
-        'Mainstream short-stay comparison sample'
+prep.check_columns(
+    current,
+    [
+        "id",
+        "host_status",
     ],
-    'Listing Count': [
-        len(l),
-        len(c),
-        len(e),
-        len(q)
+    "Current city scrape",
+)
+
+prep.check_columns(
+    c,
+    [
+        "price_aud",
+        "bedrooms",
+        "bath_num",
+        "area",
+    ],
+    "Current non-Superhost sample",
+)
+
+prep.check_columns(
+    e,
+    [
+        "id",
+        "price_aud",
+    ],
+    "Entire-home supply sample",
+)
+
+prep.check_columns(
+    q,
+    [
+        "id",
+        "room_type",
+        "bedrooms",
+        "accommodates",
+        "price_aud",
+    ],
+    "Price-model sample",
+)
+
+if current.empty or c.empty or e.empty or q.empty:
+    raise ValueError(
+        "One or more required EDA samples are empty."
+    )
+
+
+# ==================== Summarize sample sizes ====================
+
+sample_summary = pd.DataFrame(
+    [
+        {
+            "Sample": "Current city scrape",
+            "Listings": len(current),
+        },
+        {
+            "Sample": "Confirmed non-Superhost listings",
+            "Listings": len(c),
+        },
+        {
+            "Sample": "Non-Superhost entire homes",
+            "Listings": len(e),
+        },
+        {
+            "Sample": "Price-analysis and prediction sample",
+            "Listings": len(q),
+        },
     ]
-})
+)
 
-display(sample_overview)
+export_table(
+    sample_summary,
+    "eda_sample_summary",
+)
+
+show_table(sample_summary)
 
 
-# ==================== Check missing values ====================
+# ==================== Summarize host-status distribution ====================
 
-missing_cols = {
-    'price_aud': 'Nightly price',
-    'bedrooms': 'Number of bedrooms',
-    'bath_num': 'Number of bathrooms',
-    'area': 'Area',
-    'latitude': 'Latitude',
-    'longitude': 'Longitude'
+host_labels = {
+    "f": "Non-Superhost",
+    "t": "Superhost",
+    "unknown": "Unknown",
 }
 
-missing = (
-    l[list(missing_cols)]
-    .isna()
-    .mean()
-    .mul(100)
-    .rename(index=missing_cols)
-    .sort_values(ascending=False)
+host_order = [
+    "Non-Superhost",
+    "Superhost",
+    "Unknown",
+]
+
+host_counts = (
+    current["host_status"]
+    .map(host_labels)
+    .fillna("Unknown")
+    .value_counts()
+    .reindex(
+        host_order,
+        fill_value=0,
+    )
 )
 
-missing_table = pd.DataFrame({
-    'Variable': missing.index,
-    'Missing Percentage (%)': missing.values.round(2)
-})
+host_summary = (
+    host_counts
+    .rename("Listings")
+    .rename_axis("Host_status")
+    .reset_index()
+)
 
-display(missing_table)
+host_summary["Share_pct"] = (
+    host_summary["Listings"]
+    / len(current)
+    * 100
+)
+
+export_table(
+    host_summary,
+    "eda_host_status_summary",
+)
+
+show_table(
+    host_summary.round(2)
+)
+
+
+# ==================== Plot host-status distribution ====================
 
 fig = horizontal(
-    missing.index,
-    missing.values,
-    'Missing Values in Key Variables',
-    'Percentage of All Listings (%)',
-    fmt=lambda value: f'{value:.1f}%'
+    labels=host_counts.index,
+    values=host_counts.values,
+    title="Host status in the current city scrape",
+    unit="Number of listings",
+    colors=[
+        TEAL,
+        GRAY,
+        GOLD,
+    ],
 )
 
-done(fig, 'eda_missingness')
+done(
+    fig,
+    "eda_host_scope",
+)
 
 
-# ==================== Summarize nightly prices ====================
+# ==================== Check room types in the model sample ====================
 
-prices = e.loc[e['price_aud'].gt(0), 'price_aud']
+room_type_summary = (
+    q.groupby("room_type")
+    .size()
+    .rename("Listings")
+    .rename_axis("Room_type")
+    .reset_index()
+)
+
+room_type_summary["Share_pct"] = (
+    room_type_summary["Listings"]
+    / len(q)
+    * 100
+)
+
+export_table(
+    room_type_summary,
+    "eda_model_room_types",
+)
+
+show_table(
+    room_type_summary.round(2)
+)
+
+if not q["room_type"].eq("Entire home/apt").all():
+    raise ValueError(
+        "The model sample contains listings outside the entire-home scope."
+    )
+
+
+# ==================== Calculate missing-value percentages ====================
+
+missing_labels = {
+    "price_aud": "Nightly listed price",
+    "bedrooms": "Bedrooms",
+    "bath_num": "Bathrooms",
+    "area": "Area",
+}
+
+missing_summary = pd.DataFrame(
+    {
+        "Field": list(missing_labels.values()),
+        "Missing_count": [
+            int(c[column].isna().sum())
+            for column in missing_labels
+        ],
+        "Sample_size": len(c),
+        "Missing_pct": [
+            c[column].isna().mean() * 100
+            for column in missing_labels
+        ],
+    }
+).sort_values(
+    "Missing_pct",
+    ascending=False,
+).reset_index(drop=True)
+
+export_table(
+    missing_summary,
+    "eda_missingness",
+)
+
+show_table(
+    missing_summary.round(2)
+)
+
+
+# ==================== Plot missing-value percentages ====================
+
+fig = horizontal(
+    labels=missing_summary["Field"],
+    values=missing_summary["Missing_pct"].values,
+    title="Missing values in core fields",
+    unit="Share of current non-Superhost listings (%)",
+    fmt=lambda value: f"{value:.1f}%",
+)
+
+done(
+    fig,
+    "eda_missingness",
+)
+
+
+# ==================== Select positive listed prices ====================
+
+prices = pd.to_numeric(
+    e["price_aud"],
+    errors="coerce",
+)
+
+prices = prices.loc[
+    prices.gt(0)
+    & np.isfinite(prices)
+].copy()
 
 if prices.empty:
     raise ValueError(
-        'No positive nightly prices are available for analysis.'
+        "No finite positive listed prices are available."
     )
 
-summary_stats = (
-    prices
-    .describe(percentiles=[.25, .5, .75, .95, .99])
-    .rename('Advertised Nightly Price (AUD)')
-    .round(2)
+
+# ==================== Summarize nightly listed prices ====================
+
+price_summary = (
+    prices.describe(
+        percentiles=[
+            0.25,
+            0.50,
+            0.75,
+            0.95,
+            0.99,
+        ]
+    )
+    .rename("Nightly_listed_price_AUD")
+    .rename_axis("Statistic")
+    .reset_index()
 )
 
-display(summary_stats.to_frame())
+export_table(
+    price_summary,
+    "eda_price_summary",
+)
+
+show_table(
+    price_summary.round(2)
+)
 
 
-# ==================== Visualize the price distribution ====================
+# ==================== Define the price-distribution display range ====================
 
-# Restrict the histogram to the 99th percentile for readability.
-# Summary statistics and the median still use all positive prices.
-cap = prices.quantile(.99)
+price_cap = float(
+    prices.quantile(0.99)
+)
 
-fig, ax = plt.subplots(figsize=(9.2, 4.2))
+median_price = float(
+    prices.median()
+)
+
+display_prices = prices.loc[
+    prices.le(price_cap)
+]
+
+display_check = pd.DataFrame(
+    [
+        {
+            "Positive_price_listings": len(prices),
+            "Displayed_listings": len(display_prices),
+            "Listings_above_display_limit": int(
+                prices.gt(price_cap).sum()
+            ),
+            "Display_limit_P99_AUD": price_cap,
+            "Median_positive_price_AUD": median_price,
+        }
+    ]
+)
+
+export_table(
+    display_check,
+    "eda_price_display_check",
+)
+
+# The display limit affects this histogram only.
+# It does not remove observations from the saved analysis samples.
+
+
+# ==================== Plot nightly listed-price distribution ====================
+
+fig, ax = plt.subplots(
+    figsize=(10, 5)
+)
 
 ax.hist(
-    prices[prices.le(cap)],
+    display_prices,
     bins=42,
     color=TEAL,
-    edgecolor='white'
+    edgecolor="white",
 )
 
 ax.axvline(
-    prices.median(),
+    median_price,
     color=GOLD,
     linewidth=2,
-    label=f'Median of All Positive Prices: A${prices.median():.0f}'
+    label=(
+        "Median of all positive prices: "
+        f"A${median_price:,.0f}"
+    ),
 )
 
 ax.set_title(
-    'Nightly Price Distribution',
-    loc='left',
-    fontweight='bold'
+    "Distribution of nightly listed prices",
+    loc="left",
+    pad=15,
 )
 
-ax.set_xlabel('Advertised Nightly Price (AUD)')
-ax.set_ylabel('Number of Listings')
-ax.legend(frameon=False)
+ax.set_xlabel(
+    "Nightly listed price (AUD)"
+)
 
-fig.tight_layout()
-done(fig, 'eda_price_distribution')
+ax.set_ylabel(
+    "Number of listings"
+)
 
-print(
-    f'For readability, the histogram only shows prices up to '
-    f'the 99th percentile (A${cap:,.0f}). '
-    f'Higher-price records remain in the dataset.'
+ax.legend()
+
+ax.set_axisbelow(True)
+
+ax.grid(
+    axis="y",
+    alpha=0.2,
+)
+
+fig.text(
+    0.12,
+    0.015,
+    (
+        "For display only, prices above the 99th percentile "
+        f"(A${price_cap:,.0f}) are omitted."
+    ),
+    fontsize=9,
+    color=prep.MUTED,
+)
+
+fig.tight_layout(
+    rect=[0, 0.05, 1, 1]
+)
+
+done(
+    fig,
+    "eda_price_distribution",
 )
 
 
-# ==================== Compare listings by bedroom count ====================
+# ==================== Summarize bedroom structure in the model sample ====================
 
 bedroom_summary = (
-    q.groupby('bedrooms')
+    q.groupby("bedrooms")
     .agg(
-        Listing_Count=('id', 'size'),
-        Median_Nightly_Price_AUD=('price_aud', 'median'),
-        Median_Guest_Capacity=('accommodates', 'median')
+        Listings=("id", "size"),
+        Median_listed_price_AUD=(
+            "price_aud",
+            "median",
+        ),
+        Median_guest_capacity=(
+            "accommodates",
+            "median",
+        ),
     )
-    .rename_axis('Bedrooms')
-    .round(1)
+    .sort_index()
+    .rename_axis("Bedrooms")
+    .reset_index()
 )
 
-display(bedroom_summary)
-
-
-# ==================== Save EDA summary tables ====================
-
-sample_overview.to_csv(
-    T / 'eda_sample_overview.csv',
-    index=False,
-    encoding='utf-8-sig'
+bedroom_summary["Share_of_model_sample_pct"] = (
+    bedroom_summary["Listings"]
+    / len(q)
+    * 100
 )
 
-missing_table.to_csv(
-    T / 'eda_missingness.csv',
-    index=False,
-    encoding='utf-8-sig'
+export_table(
+    bedroom_summary,
+    "eda_bedroom_summary",
 )
 
-summary_stats.to_frame().to_csv(
-    T / 'eda_price_summary.csv',
-    index_label='Statistic',
-    encoding='utf-8-sig'
+show_table(
+    bedroom_summary.round(2)
 )
 
-bedroom_summary.to_csv(
-    T / 'eda_bedroom_summary.csv',
-    encoding='utf-8-sig'
+
+# ==================== Save EDA figure inventory ====================
+
+figure_inventory = pd.DataFrame(
+    [
+        {
+            "Figure": "eda_host_scope.png",
+            "Purpose": (
+                "Describe host-status composition "
+                "in the current city scrape."
+            ),
+            "Sample": "Current city scrape",
+        },
+        {
+            "Figure": "eda_missingness.png",
+            "Purpose": (
+                "Describe missingness in core analysis fields."
+            ),
+            "Sample": "Current confirmed non-Superhost listings",
+        },
+        {
+            "Figure": "eda_price_distribution.png",
+            "Purpose": (
+                "Inspect the distribution of positive listed prices."
+            ),
+            "Sample": "Non-Superhost entire-home supply sample",
+        },
+    ]
 )
 
-print(f'Charts saved to: {F.resolve()}')
-print(f'Tables saved to: {T.resolve()}')
+export_table(
+    figure_inventory,
+    "eda_figure_inventory",
+)
+
+
+# ==================== Print completion summary ====================
+
+print()
+print("Exploratory data analysis completed.")
+print()
+
+print(f"Current city-scrape listings: {len(current):,}")
+print(f"Confirmed non-Superhost listings: {len(c):,}")
+print(f"Entire-home supply sample: {len(e):,}")
+print(f"Price-model sample: {len(q):,}")
+
+print()
+print(f"Median positive listed price: A${median_price:,.2f}")
+print(f"Histogram display limit: A${price_cap:,.2f}")
+
+print()
+print("EDA figures saved: 3")
+print(f"Figure directory: {F}")
+print(f"Table directory: {T}")

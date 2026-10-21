@@ -1,0 +1,33 @@
+{
+  "target": "price_aud",
+  "target_unit": "AUD per night",
+  "grouping_variable": "host_id",
+  "numeric_features": [
+    "bedrooms",
+    "accommodates",
+    "bath_num",
+    "minimum_nights",
+    "quote_nights",
+    "quote_lead",
+    "quote_weekend",
+    "Wifi",
+    "Kitchen",
+    "Free_parking",
+    "Self_check_in",
+    "Pool",
+    "Fireplace",
+    "Hot_tub",
+    "Pets_allowed",
+    "Workspace",
+    "BBQ",
+    "Garden",
+    "Air_conditioning"
+  ],
+  "categorical_features": [
+    "area",
+    "property_group",
+    "quote_month"
+  ],
+  "selected_model": "Gradient Boosting",
+  "training_scope": "Confirmed non-Superhost entire-home listings meeting the price-analysis scope"
+}

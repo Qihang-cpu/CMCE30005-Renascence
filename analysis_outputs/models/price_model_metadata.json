@@ -1,0 +1,69 @@
+{
+  "selected_model": "Gradient Boosting",
+  "selection_metric": "Validation MAE",
+  "validation": {
+    "Log Ridge": {
+      "MAE": 81.11038659685158,
+      "MedAE": 55.62641413363207,
+      "within25": 0.5535714285714286,
+      "RMSE": 137.4213741357832,
+      "R2": 0.3236800571246673
+    },
+    "Random Forest": {
+      "MAE": 77.8219389706515,
+      "MedAE": 47.41564166871025,
+      "within25": 0.5964285714285714,
+      "RMSE": 135.69393161165993,
+      "R2": 0.34057642145746314
+    },
+    "Gradient Boosting": {
+      "MAE": 75.17647613291257,
+      "MedAE": 45.41232948514791,
+      "within25": 0.625,
+      "RMSE": 137.1056766709304,
+      "R2": 0.32678390093534393
+    }
+  },
+  "test": {
+    "Global median": {
+      "MAE": 124.31379506641365,
+      "MedAE": 80.0,
+      "within25": 0.428842504743833,
+      "RMSE": 212.56244616966535,
+      "R2": -0.11630196504437729
+    },
+    "Area-bedroom median": {
+      "MAE": 105.56278937381404,
+      "MedAE": 63.36,
+      "within25": 0.5246679316888045,
+      "RMSE": 190.04249180576886,
+      "R2": 0.10770174634889296
+    },
+    "Selected model": {
+      "MAE": 97.22692039613656,
+      "MedAE": 58.66877824015003,
+      "within25": 0.5759013282732448,
+      "RMSE": 180.4009043381958,
+      "R2": 0.19594449212017506
+    }
+  },
+  "split_listings": {
+    "training": 3499,
+    "validation": 1120,
+    "test": 1054
+  },
+  "split_hosts": {
+    "training": 1599,
+    "validation": 534,
+    "test": 534
+  },
+  "peer_baseline_mae_improvement": 0.07896597870447404,
+  "saved_model": "selected_price_model.joblib",
+  "model_fit_sample": "Development sample",
+  "package_versions": {
+    "numpy": "2.5.4",
+    "pandas": "3.0.6",
+    "scikit-learn": "1.9.1",
+    "joblib": "1.6.0"
+  }
+}

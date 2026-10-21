@@ -1,12 +1,8 @@
-﻿area,size,median
-Boroondara,46,252.5
-Glen Eira,36,258.12
-Maribyrnong,43,236.0
-Melbourne,1743,288.0
-Monash,58,302.0
-Moonee Valley,45,284.0
-Moreland,51,283.0
-Port Phillip,303,287.5
-Stonnington,126,291.75
-Whitehorse,81,260.0
-Yarra,167,346.96
+﻿area,n,median
+Maribyrnong,31,239.0
+Melbourne,992,288.5
+Monash,30,294.75
+Port Phillip,171,288.0
+Stonnington,79,301.0
+Whitehorse,60,267.0
+Yarra,98,345.5

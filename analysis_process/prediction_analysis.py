@@ -1,621 +1,602 @@
-# ==================== Install missing packages ====================
-
-import importlib.util
-import subprocess
-import sys
-
-packages = {
-    'pandas': 'pandas',
-    'numpy': 'numpy',
-    'matplotlib': 'matplotlib',
-    'sklearn': 'scikit-learn',
-    'joblib': 'joblib'
-}
-
-missing_packages = [
-    package_name
-    for module_name, package_name in packages.items()
-    if importlib.util.find_spec(module_name) is None
-]
-
-if missing_packages:
-    subprocess.check_call([
-        sys.executable,
-        '-m',
-        'pip',
-        'install',
-        *missing_packages
-    ])
-
-
 # ==================== Import packages ====================
 
-import json
 from pathlib import Path
-from importlib.metadata import version
+import sys
+import json
+import importlib.metadata
 
 import joblib
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
 from sklearn.base import clone
-from sklearn.compose import ColumnTransformer, TransformedTargetRegressor
+from sklearn.compose import (
+    ColumnTransformer,
+    TransformedTargetRegressor,
+)
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.preprocessing import (
+    OneHotEncoder,
+    StandardScaler,
+)
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import Ridge
 from sklearn.ensemble import (
     RandomForestRegressor,
-    HistGradientBoostingRegressor
+    HistGradientBoostingRegressor,
 )
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.metrics import (
     mean_absolute_error,
     median_absolute_error,
     mean_squared_error,
-    r2_score
+    r2_score,
 )
 from sklearn.inspection import permutation_importance
 
 
-# ==================== Set output folders ====================
+# ==================== Locate the project directory ====================
 
-OUT = Path('analysis_output')
+SCRIPT_DIR = Path(__file__).resolve().parent
 
-FIGURES = OUT / 'figures'
-CHARTS = OUT / 'charts'
-MODELS = OUT / 'models'
+PROJECT_DIR = SCRIPT_DIR.parent
+MODULE_DIR = PROJECT_DIR / "data"
 
-for folder in [FIGURES, CHARTS, MODELS]:
+for filename in [
+    "Graph_preparation.py",
+    "Data_Visualization.py",
+]:
+    module_path = MODULE_DIR / filename
+
+    if not module_path.is_file():
+        raise FileNotFoundError(
+            f"Required Python file not found: {module_path}"
+        )
+
+if str(MODULE_DIR) not in sys.path:
+    sys.path.insert(0, str(MODULE_DIR))
+
+
+# ==================== Import preparation and visualization modules ====================
+
+import Graph_preparation as prep
+import Data_Visualization as viz
+
+
+# ==================== Set output directories ====================
+
+BASE_DIR = PROJECT_DIR
+
+OUT = BASE_DIR / "analysis_outputs"
+F = OUT / "figures"
+T = OUT / "tables"
+MODELS = OUT / "models"
+
+for folder in [OUT, F, T, MODELS]:
     folder.mkdir(parents=True, exist_ok=True)
 
-pd.set_option('display.max_columns', 25)
-pd.set_option('display.width', 180)
-
-
-# ==================== Set chart colors and styles ====================
-
-NAVY = '#183C4A'
-TEAL = '#168A85'
-GOLD = '#D58A39'
-BLUE = '#5386AF'
-GRAY = '#C9D2D5'
-
-plt.rcParams.update({
-    'font.family': 'DejaVu Sans',
-    'font.size': 11,
-    'axes.unicode_minus': False,
-    'axes.spines.top': False,
-    'axes.spines.right': False,
-    'figure.facecolor': 'white',
-    'axes.facecolor': 'white',
-    'text.color': NAVY,
-    'axes.labelcolor': NAVY
-})
-
-
-# ==================== Define helper functions ====================
-
-def locate_listings():
-    folders = [
-        Path('.'),
-        Path('data'),
-        Path('upload'),
-        Path('../upload'),
-        Path('/content')
-    ]
-
-    filenames = [
-        'listings (1).csv.gz',
-        'listings.csv.gz',
-        'listings.csv'
-    ]
-
-    for folder in folders:
-        for filename in filenames:
-            path = folder / filename
-
-            if path.is_file():
-                return path
-
-    raise FileNotFoundError(
-        'Place listings (1).csv.gz, listings.csv.gz, or '
-        'listings.csv in the project folder or data folder.'
-    )
-
-
-def parse_amenities(value):
-    if not isinstance(value, str):
-        return ''
-
-    try:
-        parsed = json.loads(value)
-    except (json.JSONDecodeError, TypeError):
-        return value.lower()
-
-    if isinstance(parsed, list):
-        return ' | '.join(str(item) for item in parsed).lower()
-
-    return str(parsed).lower()
-
-
-def save_table(frame, name):
-    frame.to_csv(
-        CHARTS / f'{name}.csv',
-        index=False,
-        encoding='utf-8-sig'
-    )
-
-    print(f'\n{name}')
-    print(frame.to_string(index=False))
-
-
-def save_figure(fig, name):
-    fig.tight_layout()
-
-    fig.savefig(
-        FIGURES / f'{name}.png',
-        dpi=165,
-        bbox_inches='tight'
-    )
-
-    plt.show()
-    plt.close(fig)
-
-
-def evaluate(actual, predicted):
-    actual = np.asarray(actual, dtype=float)
-    predicted = np.asarray(predicted, dtype=float)
-
-    return {
-        'MAE': float(mean_absolute_error(actual, predicted)),
-        'MedAE': float(median_absolute_error(actual, predicted)),
-        'Within_25_Percent': float(
-            np.mean(np.abs(actual - predicted) / actual <= 0.25)
-        ),
-        'RMSE': float(np.sqrt(mean_squared_error(actual, predicted))),
-        'R2': float(r2_score(actual, predicted))
-    }
-
-
-# ==================== Load the listings dataset ====================
-
-listing_path = locate_listings()
-raw = pd.read_csv(listing_path, low_memory=False)
-
-required_columns = [
-    'id',
-    'host_id',
-    'last_scraped',
-    'price',
-    'bedrooms',
-    'accommodates',
-    'minimum_nights',
-    'neighbourhood_cleansed',
-    'bathrooms_text',
-    'price_quote_checkin_date',
-    'price_quote_checkout_date',
-    'source',
-    'room_type',
-    'property_type',
-    'amenities'
-]
-
-missing_columns = [
-    column
-    for column in required_columns
-    if column not in raw.columns
-]
-
-if missing_columns:
+if Path(prep.OUT).resolve() != OUT.resolve():
     raise ValueError(
-        f'The listings file is missing required columns: {missing_columns}'
+        "Graph_preparation.py uses a different output directory. "
+        f"Expected: {OUT}"
     )
 
-print(f'Loaded file: {listing_path}')
+export_table = prep.export_table
+show_table = prep.show_table
 
 
-# ==================== Prepare listing variables ====================
+# ==================== Load prepared analysis samples ====================
 
-l = raw.dropna(subset=['id']).copy()
+q = prep.q.copy()
+sc = prep.sc.copy()
 
-l['_scraped_order'] = pd.to_datetime(
-    l['last_scraped'],
-    errors='coerce'
-)
+AMENITY_COLUMNS = prep.AMENITY_COLUMNS.copy()
 
-l = (
-    l.sort_values('_scraped_order', kind='stable')
-    .drop_duplicates('id', keep='last')
-    .sort_index()
-    .drop(columns='_scraped_order')
-)
-
-l['price_aud'] = pd.to_numeric(
-    l['price']
-    .astype('string')
-    .str.replace(r'[$,]', '', regex=True),
-    errors='coerce'
-)
-
-for column in ['bedrooms', 'accommodates', 'minimum_nights']:
-    l[column] = pd.to_numeric(l[column], errors='coerce')
-
-l['area'] = l['neighbourhood_cleansed']
-
-bathroom_text = l['bathrooms_text'].astype('string')
-
-l['bath_num'] = pd.to_numeric(
-    bathroom_text.str.extract(r'(\d+(?:\.\d+)?)')[0],
-    errors='coerce'
-)
-
-l.loc[
-    bathroom_text.str.contains(
-        'half-bath',
-        case=False,
-        na=False
-    ),
-    'bath_num'
-] = 0.5
-
-checkin = pd.to_datetime(
-    l['price_quote_checkin_date'],
-    errors='coerce'
-)
-
-checkout = pd.to_datetime(
-    l['price_quote_checkout_date'],
-    errors='coerce'
-)
-
-scraped = pd.to_datetime(
-    l['last_scraped'],
-    errors='coerce'
-)
-
-l['quote_nights'] = (checkout - checkin).dt.days
-l['quote_lead'] = (checkin - scraped).dt.days
-l['quote_weekend'] = checkin.dt.dayofweek.ge(5).astype(int)
-l['quote_month'] = checkin.dt.month.astype('Int64').astype('string')
-
-l['property_group'] = np.select(
-    [
-        l['property_type'].isin([
-            'Entire rental unit',
-            'Entire condo',
-            'Entire serviced apartment',
-            'Entire loft'
-        ]),
-        l['property_type'].isin([
-            'Entire home',
-            'Entire townhouse'
-        ]),
-        l['property_type'].isin([
-            'Entire cottage',
-            'Entire cabin',
-            'Entire guesthouse',
-            'Entire guest suite',
-            'Tiny home',
-            'Farm stay'
-        ])
-    ],
-    [
-        'Apartment',
-        'House / townhouse',
-        'Cottage / guesthouse'
-    ],
-    default='Other'
-)
-
-
-# ==================== Extract amenity indicators ====================
-
-amenity_patterns = {
-    'WiFi': r'\bwifi\b',
-    'Kitchen': r'\bkitchen\b',
-    'Free parking': (
-        r'\bfree parking on premises\b|'
-        r'\bfree driveway parking\b'
-    ),
-    'Self check-in': r'\bself check-in\b',
-    'Pool': r'\bpool\b',
-    'Fireplace': r'\b(?:indoor fireplace|fireplace)\b',
-    'Hot tub': r'\bhot tub\b',
-    'Pets allowed': r'\bpets allowed\b',
-    'Workspace': r'\bdedicated workspace\b',
-    'BBQ': r'\bbbq\b',
-    'Garden': r'\bbackyard\b|\bgarden\b',
-    'Air conditioning': r'air conditioning'
-}
-
-amen = list(amenity_patterns)
-amenity_text = l['amenities'].map(parse_amenities)
-
-for feature, pattern in amenity_patterns.items():
-    l[feature] = (
-        amenity_text.str.contains(
-            pattern,
-            regex=True,
-            na=False
-        )
-        .astype(int)
-    )
-
-
-# ==================== Define the modeling sample ====================
-
-e = l.loc[
-    l['source'].eq('city scrape')
-    & l['room_type'].eq('Entire home/apt')
-].copy()
-
-q = e.loc[
-    e['price_aud'].between(20, 2000)
-    & e['bedrooms'].between(1, 3)
-    & e['accommodates'].between(1, 8)
-    & e['minimum_nights'].between(1, 7)
-    & e['quote_nights'].between(1, 7)
-    & e['quote_lead'].between(0, 30)
-].copy()
-
-# Host IDs are required to prevent host overlap across data splits.
-missing_host_count = int(q['host_id'].isna().sum())
-q = q.dropna(subset=['host_id']).reset_index(drop=True)
-
-if q.empty or q['host_id'].nunique() < 5:
+if q.empty:
     raise ValueError(
-        'Insufficient listings or distinct hosts for grouped splitting.'
+        "The price-model sample is empty."
     )
 
-print(f'Modeling listings: {len(q):,}')
-print(f'Excluded listings with missing host IDs: {missing_host_count:,}')
 
+# ==================== Define numeric and categorical predictors ====================
 
-# ==================== Define predictors and target ====================
+NUMERIC_FEATURES = [
+    "bedrooms",
+    "accommodates",
+    "bath_num",
+    "minimum_nights",
+    "quote_nights",
+    "quote_lead",
+    "quote_weekend",
+] + AMENITY_COLUMNS
 
-nums = [
-    'bedrooms',
-    'accommodates',
-    'bath_num',
-    'minimum_nights',
-    'quote_nights',
-    'quote_lead',
-    'quote_weekend'
-] + amen
-
-cats = [
-    'area',
-    'property_group',
-    'quote_month'
+CATEGORICAL_FEATURES = [
+    "area",
+    "property_group",
+    "quote_month",
 ]
 
-# Replace missing categorical values with an explicit label.
-for column in cats:
-    q[column] = (
+FEATURES = (
+    NUMERIC_FEATURES
+    + CATEGORICAL_FEATURES
+)
+
+TARGET = "price_aud"
+GROUP = "host_id"
+
+prep.check_columns(
+    q,
+    [
+        "id",
+        GROUP,
+        TARGET,
+    ] + FEATURES,
+    "Price-model sample",
+)
+
+
+# ==================== Validate listing IDs and host groups ====================
+
+if q["id"].isna().any() or not q["id"].is_unique:
+    raise ValueError(
+        "The model sample must contain one non-missing ID per listing."
+    )
+
+host_ids = (
+    q[GROUP]
+    .astype("string")
+    .str.strip()
+)
+
+invalid_hosts = (
+    host_ids.isna()
+    | host_ids.eq("").fillna(False)
+)
+
+if invalid_hosts.any():
+    raise ValueError(
+        f"{int(invalid_hosts.sum())} listings have missing host IDs. "
+        "Resolve these records before splitting by host."
+    )
+
+q[GROUP] = host_ids
+
+q = q.reset_index(drop=True)
+
+
+# ==================== Standardize predictor data types ====================
+
+for column in NUMERIC_FEATURES:
+    q[column] = pd.to_numeric(
+        q[column],
+        errors="coerce",
+    ).replace(
+        [np.inf, -np.inf],
+        np.nan,
+    )
+
+for column in CATEGORICAL_FEATURES:
+    values = (
         q[column]
-        .astype('string')
-        .fillna('Unknown')
-        .astype(str)
+        .astype("string")
+        .str.strip()
+        .replace("", pd.NA)
     )
 
-X = q[nums + cats].copy()
-y = q['price_aud'].copy()
-groups = q['host_id'].copy()
+    q[column] = (
+        values.astype(object)
+        .where(values.notna(), np.nan)
+    )
 
-save_table(
-    pd.DataFrame({
-        'Feature': nums + cats,
-        'Type': ['Numeric'] * len(nums) + ['Categorical'] * len(cats)
-    }),
-    'predictive_features'
+q[TARGET] = pd.to_numeric(
+    q[TARGET],
+    errors="coerce",
 )
 
+valid_target = (
+    q[TARGET].notna()
+    & np.isfinite(q[TARGET])
+    & q[TARGET].gt(0)
+)
 
-# ==================== Split data by host ====================
+if not valid_target.all():
+    raise ValueError(
+        "The model target must contain only finite positive prices."
+    )
 
-# Reserve approximately 20% of host groups for the final test.
+
+# ==================== Define model inputs ====================
+
+X = q[FEATURES].copy()
+y = q[TARGET].copy()
+groups = q[GROUP].copy()
+
+print(f"Model listings: {len(q):,}")
+print(f"Unique hosts: {groups.nunique():,}")
+print(f"Numeric predictors: {len(NUMERIC_FEATURES)}")
+print(f"Categorical predictors: {len(CATEGORICAL_FEATURES)}")
+print()
+
+
+# ==================== Split development and final test samples by host ====================
+
 development_index, test_index = next(
     GroupShuffleSplit(
         n_splits=1,
         test_size=0.20,
-        random_state=42
-    ).split(X, y, groups)
+        random_state=42,
+    ).split(
+        X,
+        y,
+        groups,
+    )
 )
 
-# Use approximately 25% of development host groups for validation.
+
+# ==================== Split training and validation samples by host ====================
+
 train_relative, validation_relative = next(
     GroupShuffleSplit(
         n_splits=1,
         test_size=0.25,
-        random_state=43
+        random_state=43,
     ).split(
         X.iloc[development_index],
         y.iloc[development_index],
-        groups.iloc[development_index]
+        groups.iloc[development_index],
     )
 )
 
 train_index = development_index[train_relative]
 validation_index = development_index[validation_relative]
 
-assert set(groups.iloc[train_index]).isdisjoint(
-    set(groups.iloc[validation_index])
+
+# ==================== Verify separation between host groups ====================
+
+train_hosts = set(groups.iloc[train_index])
+validation_hosts = set(groups.iloc[validation_index])
+test_hosts = set(groups.iloc[test_index])
+
+if not train_hosts.isdisjoint(validation_hosts):
+    raise ValueError(
+        "Training and validation samples share host IDs."
+    )
+
+if not train_hosts.isdisjoint(test_hosts):
+    raise ValueError(
+        "Training and test samples share host IDs."
+    )
+
+if not validation_hosts.isdisjoint(test_hosts):
+    raise ValueError(
+        "Validation and test samples share host IDs."
+    )
+
+split_summary = pd.DataFrame(
+    [
+        {
+            "Split": "Training",
+            "Listings": len(train_index),
+            "Hosts": len(train_hosts),
+        },
+        {
+            "Split": "Validation",
+            "Listings": len(validation_index),
+            "Hosts": len(validation_hosts),
+        },
+        {
+            "Split": "Final test",
+            "Listings": len(test_index),
+            "Hosts": len(test_hosts),
+        },
+    ]
 )
 
-assert set(groups.iloc[development_index]).isdisjoint(
-    set(groups.iloc[test_index])
+export_table(
+    split_summary,
+    "predictive_split_summary",
 )
 
-split_labels = np.full(len(q), '', dtype=object)
-split_labels[train_index] = 'Train'
-split_labels[validation_index] = 'Validation'
-split_labels[test_index] = 'Test'
+show_table(split_summary)
 
-save_table(
-    pd.DataFrame({
-        'Split': ['Train', 'Validation', 'Test'],
-        'Listings': [
-            len(train_index),
-            len(validation_index),
-            len(test_index)
-        ],
-        'Hosts': [
-            groups.iloc[train_index].nunique(),
-            groups.iloc[validation_index].nunique(),
-            groups.iloc[test_index].nunique()
+# Group proportions are determined by host counts.
+# Listing proportions may differ from exactly 60%, 20%, and 20%.
+
+
+# ==================== Save listing-level split assignments ====================
+
+split_assignments = q[
+    ["id", GROUP]
+].copy()
+
+split_assignments["Split"] = ""
+
+split_assignments.loc[
+    train_index,
+    "Split",
+] = "Training"
+
+split_assignments.loc[
+    validation_index,
+    "Split",
+] = "Validation"
+
+split_assignments.loc[
+    test_index,
+    "Split",
+] = "Final test"
+
+export_table(
+    split_assignments,
+    "predictive_split_assignments",
+)
+
+
+# ==================== Define numeric preprocessing ====================
+
+numeric_pipeline = Pipeline(
+    steps=[
+        (
+            "impute",
+            SimpleImputer(
+                strategy="median",
+                add_indicator=True,
+                keep_empty_features=True,
+            ),
+        ),
+        (
+            "scale",
+            StandardScaler(),
+        ),
+    ]
+)
+
+
+# ==================== Define categorical preprocessing ====================
+
+categorical_pipeline = Pipeline(
+    steps=[
+        (
+            "impute",
+            SimpleImputer(
+                strategy="constant",
+                fill_value="Unknown",
+                keep_empty_features=True,
+            ),
+        ),
+        (
+            "encode",
+            OneHotEncoder(
+                handle_unknown="ignore",
+                sparse_output=False,
+            ),
+        ),
+    ]
+)
+
+
+# ==================== Combine preprocessing pipelines ====================
+
+preprocessor = ColumnTransformer(
+    transformers=[
+        (
+            "numeric",
+            numeric_pipeline,
+            NUMERIC_FEATURES,
+        ),
+        (
+            "categorical",
+            categorical_pipeline,
+            CATEGORICAL_FEATURES,
+        ),
+    ],
+    remainder="drop",
+)
+
+
+# ==================== Define model-pipeline constructor ====================
+
+def build_pipeline(estimator, log_target=True):
+    """Build a preprocessing and regression pipeline."""
+
+    regression_pipeline = Pipeline(
+        steps=[
+            (
+                "prepare",
+                clone(preprocessor),
+            ),
+            (
+                "model",
+                estimator,
+            ),
         ]
-    }),
-    'predictive_data_split'
-)
-
-# Save listing-to-split assignments for reproducibility.
-q[['id', 'host_id']].assign(Split=split_labels).to_csv(
-    CHARTS / 'predictive_split_assignments.csv',
-    index=False,
-    encoding='utf-8-sig'
-)
-
-
-# ==================== Define preprocessing ====================
-
-numeric_pipeline = Pipeline([
-    (
-        'impute',
-        SimpleImputer(
-            strategy='median',
-            add_indicator=True
-        )
-    ),
-    ('scale', StandardScaler())
-])
-
-# Support both older and newer scikit-learn versions.
-try:
-    encoder = OneHotEncoder(
-        handle_unknown='ignore',
-        sparse_output=False
     )
-except TypeError:
-    encoder = OneHotEncoder(
-        handle_unknown='ignore',
-        sparse=False
-    )
-
-preprocessor = ColumnTransformer([
-    ('num', numeric_pipeline, nums),
-    ('cat', encoder, cats)
-])
-
-
-# ==================== Define candidate models ====================
-
-def build_model(estimator, log_target=True):
-    pipeline = Pipeline([
-        ('prepare', clone(preprocessor)),
-        ('model', estimator)
-    ])
 
     if log_target:
         return TransformedTargetRegressor(
-            regressor=pipeline,
+            regressor=regression_pipeline,
             func=np.log,
-            inverse_func=np.exp
+            inverse_func=np.exp,
         )
 
-    return pipeline
+    return regression_pipeline
 
+
+# ==================== Define candidate regression models ====================
 
 models = {
-    'Log-Target Ridge Regression': build_model(
-        Ridge(alpha=15)
+    "Log Ridge": build_pipeline(
+        Ridge(
+            alpha=15,
+        ),
+        log_target=True,
     ),
-
-    'Log-Target Random Forest': build_model(
+    "Random Forest": build_pipeline(
         RandomForestRegressor(
             n_estimators=180,
             min_samples_leaf=8,
             max_depth=18,
             max_features=0.8,
             n_jobs=2,
-            random_state=42
-        )
+            random_state=42,
+        ),
+        log_target=True,
     ),
-
-    'Gradient Boosting': build_model(
+    "Gradient Boosting": build_pipeline(
         HistGradientBoostingRegressor(
-            loss='absolute_error',
+            loss="absolute_error",
             max_iter=200,
             max_leaf_nodes=15,
             min_samples_leaf=40,
             l2_regularization=3,
-            random_state=42
+            random_state=42,
         ),
-        log_target=False
-    )
+        log_target=False,
+    ),
 }
 
+# Log Ridge and Random Forest use log-transformed listed prices.
+# Gradient Boosting uses listed prices in AUD with absolute-error loss.
+# All reported evaluation metrics are calculated in the original AUD scale.
 
-# ==================== P1: Train and validate candidate models ====================
+
+# ==================== Define evaluation metrics ====================
+
+def evaluate_predictions(actual, predicted):
+    """Evaluate predictions against recorded nightly listed prices."""
+
+    actual = np.asarray(
+        actual,
+        dtype=float,
+    )
+
+    predicted = np.asarray(
+        predicted,
+        dtype=float,
+    )
+
+    if not np.isfinite(predicted).all():
+        raise ValueError(
+            "Predictions contain non-finite values."
+        )
+
+    absolute_error = np.abs(
+        actual - predicted
+    )
+
+    return {
+        "MAE": float(
+            mean_absolute_error(
+                actual,
+                predicted,
+            )
+        ),
+        "MedAE": float(
+            median_absolute_error(
+                actual,
+                predicted,
+            )
+        ),
+        "within25": float(
+            np.mean(
+                absolute_error / actual <= 0.25
+            )
+        ),
+        "RMSE": float(
+            np.sqrt(
+                mean_squared_error(
+                    actual,
+                    predicted,
+                )
+            )
+        ),
+        "R2": float(
+            r2_score(
+                actual,
+                predicted,
+            )
+        ),
+    }
+
+
+# ==================== Train candidate models and evaluate validation performance ====================
 
 validation_results = {}
-fitted_validation_models = {}
+fitted_models = {}
 
 for name, model in models.items():
-    print(f'\nTraining: {name}')
+
+    print(f"Training {name}...")
 
     model.fit(
         X.iloc[train_index],
-        y.iloc[train_index]
+        y.iloc[train_index],
     )
 
     validation_predictions = model.predict(
         X.iloc[validation_index]
     )
 
-    validation_results[name] = evaluate(
+    validation_results[name] = evaluate_predictions(
         y.iloc[validation_index],
-        validation_predictions
+        validation_predictions,
     )
 
-    fitted_validation_models[name] = model
+    fitted_models[name] = model
 
 validation_table = (
-    pd.DataFrame(validation_results)
-    .T
-    .rename_axis('Model')
+    pd.DataFrame.from_dict(
+        validation_results,
+        orient="index",
+    )
+    .rename_axis("Model")
     .reset_index()
 )
 
-save_table(
-    validation_table.round(4),
-    'predictive_validation_metrics'
+export_table(
+    validation_table,
+    "validation",
 )
+
+show_table(
+    validation_table.round(3)
+)
+
+
+# ==================== Select the model using validation MAE ====================
 
 winner = min(
     validation_results,
-    key=lambda name: validation_results[name]['MAE']
+    key=lambda name: validation_results[name]["MAE"],
 )
 
-print(f'\nSelected model based on validation MAE: {winner}')
+print(f"Selected model: {winner}")
+
+print(
+    "Validation MAE: "
+    f"A${validation_results[winner]['MAE']:.2f} per night"
+)
+
+print()
 
 
-# ==================== P1: Refit the selected model ====================
+# ==================== Refit the selected model on development data ====================
 
-# Fit on train + validation data.
-# The final test hosts remain excluded.
-fit = clone(models[winner])
+selected_model = clone(
+    models[winner]
+)
 
-fit.fit(
+selected_model.fit(
     X.iloc[development_index],
-    y.iloc[development_index]
+    y.iloc[development_index],
 )
 
-test_predictions = fit.predict(X.iloc[test_index])
+test_predictions = selected_model.predict(
+    X.iloc[test_index]
+)
 
 
-# ==================== P1: Evaluate baseline methods ====================
+# ==================== Construct the global-median baseline ====================
 
 development_median = float(
     y.iloc[development_index].median()
@@ -623,495 +604,409 @@ development_median = float(
 
 global_predictions = np.repeat(
     development_median,
-    len(test_index)
+    len(test_index),
 )
 
-group_medians = (
+
+# ==================== Construct the area-bedroom median baseline ====================
+
+peer_medians = (
     q.iloc[development_index]
-    .groupby(['area', 'bedrooms'])['price_aud']
+    .groupby(["area", "bedrooms"])[TARGET]
     .median()
 )
 
-peer_predictions = np.array([
-    group_medians.get(
-        (area, bedrooms),
-        development_median
-    )
-    for area, bedrooms in zip(
-        X.iloc[test_index]['area'],
-        X.iloc[test_index]['bedrooms']
-    )
-])
+peer_predictions = np.array(
+    [
+        peer_medians.get(
+            (area, bedrooms),
+            development_median,
+        )
+        for area, bedrooms in zip(
+            X.iloc[test_index]["area"],
+            X.iloc[test_index]["bedrooms"],
+        )
+    ],
+    dtype=float,
+)
+
+# Baselines use development data only.
+# Unseen area-bedroom groups use the development-wide median.
+
+
+# ==================== Evaluate final test performance ====================
 
 test_results = {
-    'Global Median': evaluate(
+    "Global median": evaluate_predictions(
         y.iloc[test_index],
-        global_predictions
+        global_predictions,
     ),
-
-    'Area-Bedroom Median': evaluate(
+    "Area-bedroom median": evaluate_predictions(
         y.iloc[test_index],
-        peer_predictions
+        peer_predictions,
     ),
-
-    'Selected Model': evaluate(
+    "Selected model": evaluate_predictions(
         y.iloc[test_index],
-        test_predictions
-    )
+        test_predictions,
+    ),
 }
 
+# Preserve this order for the existing visualization functions.
+TEST_METHOD_ORDER = [
+    "Global median",
+    "Area-bedroom median",
+    "Selected model",
+]
+
 test_table = (
-    pd.DataFrame(test_results)
-    .T
-    .rename_axis('Method')
+    pd.DataFrame.from_dict(
+        test_results,
+        orient="index",
+    )
+    .reindex(TEST_METHOD_ORDER)
+    .rename_axis("Method")
     .reset_index()
 )
 
-save_table(
-    test_table.round(4),
-    'predictive_test_metrics'
+export_table(
+    test_table,
+    "test",
 )
 
-test_output = q.iloc[test_index][
-    ['id', 'area', 'bedrooms', 'price_aud']
-].copy()
-
-test_output = test_output.rename(columns={
-    'price_aud': 'Actual_Advertised_Price_AUD'
-})
-
-test_output['Model_Prediction_AUD'] = test_predictions
-test_output['Global_Median_Prediction_AUD'] = global_predictions
-test_output['Peer_Median_Prediction_AUD'] = peer_predictions
-
-test_output['Absolute_Error_AUD'] = np.abs(
-    test_output['Actual_Advertised_Price_AUD']
-    - test_predictions
-)
-
-test_output.to_csv(
-    CHARTS / 'predictive_test_predictions.csv',
-    index=False,
-    encoding='utf-8-sig'
+show_table(
+    test_table.round(3)
 )
 
 
-# ==================== P1: Plot model performance ====================
+# ==================== Save listing-level test predictions ====================
 
-fig, axes = plt.subplots(1, 2, figsize=(13, 5))
-
-colors = [GRAY, BLUE, TEAL]
-
-match_bars = axes[0].barh(
-    test_table['Method'],
-    test_table['Within_25_Percent'] * 100,
-    color=colors
+test_prediction_table = (
+    q.iloc[test_index][
+        [
+            "id",
+            GROUP,
+            "area",
+            "property_group",
+            "bedrooms",
+            TARGET,
+        ]
+    ]
+    .copy()
+    .reset_index(drop=True)
 )
 
-axes[0].invert_yaxis()
-axes[0].set_xlim(0, 110)
-axes[0].set_xlabel('Predictions within 25% of Advertised Price (%)')
-axes[0].set_title('Price Matching Performance', fontweight='bold')
-
-axes[0].bar_label(
-    match_bars,
-    fmt='%.1f%%',
-    padding=4
+test_prediction_table["Global_median_prediction"] = (
+    global_predictions
 )
 
-error_bars = axes[1].barh(
-    test_table['Method'],
-    test_table['MedAE'],
-    color=colors
+test_prediction_table["Area_bedroom_prediction"] = (
+    peer_predictions
 )
 
-axes[1].invert_yaxis()
-axes[1].set_xlabel('Median Absolute Error (AUD per Night)')
-axes[1].set_title('Typical Pricing Error', fontweight='bold')
-axes[1].margins(x=0.2)
-
-axes[1].bar_label(
-    error_bars,
-    fmt='%.1f',
-    padding=4
+test_prediction_table["Model_prediction"] = (
+    test_predictions
 )
 
-save_figure(fig, 'predictive_model_performance')
-
-
-# ==================== P1: Plot actual versus predicted prices ====================
-
-actual = y.iloc[test_index].to_numpy()
-
-fig, ax = plt.subplots(figsize=(7, 6))
-
-ax.scatter(
-    actual,
-    test_predictions,
-    s=12,
-    alpha=0.25,
-    color=TEAL,
-    linewidths=0
+test_prediction_table["Absolute_error_AUD"] = (
+    test_prediction_table[TARGET]
+    .sub(test_prediction_table["Model_prediction"])
+    .abs()
 )
 
-lower = min(actual.min(), test_predictions.min())
-upper = max(actual.max(), test_predictions.max())
-
-ax.plot(
-    [lower, upper],
-    [lower, upper],
-    linestyle='--',
-    color=GOLD,
-    label='Perfect Agreement'
+test_prediction_table["Absolute_percentage_error"] = (
+    test_prediction_table["Absolute_error_AUD"]
+    / test_prediction_table[TARGET]
 )
 
-ax.set_xlabel('Actual Advertised Nightly Price (AUD)')
-ax.set_ylabel('Predicted Nightly Price (AUD)')
-
-ax.set_title(
-    'Held-Out Hosts: Actual versus Predicted Prices',
-    loc='left',
-    fontweight='bold'
+export_table(
+    test_prediction_table,
+    "predictive_test_predictions",
 )
 
-ax.legend(frameon=False)
 
-save_figure(fig, 'predictive_actual_vs_predicted')
+# ==================== Calculate improvement over the peer baseline ====================
+
+peer_mae = test_results[
+    "Area-bedroom median"
+]["MAE"]
+
+model_mae = test_results[
+    "Selected model"
+]["MAE"]
+
+mae_improvement = (
+    (peer_mae - model_mae) / peer_mae
+    if peer_mae > 0
+    else None
+)
+
+improvement_table = pd.DataFrame(
+    [
+        {
+            "Selected_model": winner,
+            "Peer_baseline_MAE_AUD": peer_mae,
+            "Selected_model_MAE_AUD": model_mae,
+            "MAE_improvement_pct": (
+                mae_improvement * 100
+                if mae_improvement is not None
+                else np.nan
+            ),
+        }
+    ]
+)
+
+export_table(
+    improvement_table,
+    "predictive_baseline_improvement",
+)
 
 
-# ==================== P2: Calculate permutation importance ====================
+# ==================== Calculate validation permutation importance ====================
 
-# Use the model fitted only on the training split.
-# Calculate importance on validation data, not the final test.
+# Use the training-fitted model and validation observations.
+# Do not use the final test set to calculate feature importance.
+
 permutation = permutation_importance(
-    fitted_validation_models[winner],
+    fitted_models[winner],
     X.iloc[validation_index],
     y.iloc[validation_index],
-    scoring='neg_mean_absolute_error',
+    scoring="neg_mean_absolute_error",
     n_repeats=3,
     random_state=42,
-    n_jobs=1
+    n_jobs=1,
 )
 
-imp = pd.DataFrame({
-    'Feature': X.columns,
-    'MAE_Increase_AUD': permutation.importances_mean,
-    'Importance_SD': permutation.importances_std
-}).sort_values(
-    'MAE_Increase_AUD',
-    ascending=False
+importance = pd.DataFrame(
+    {
+        "feature": FEATURES,
+        "value": permutation.importances_mean,
+        "std": permutation.importances_std,
+    }
+).sort_values(
+    "value",
+    ascending=False,
+).reset_index(drop=True)
+
+export_table(
+    importance,
+    "importance",
 )
 
-save_table(
-    imp.round(4),
-    'predictive_feature_importance'
+show_table(
+    importance.round(3)
 )
 
-top_importance = imp.head(10)
 
-fig, ax = plt.subplots(figsize=(10, 6))
-
-ax.barh(
-    top_importance['Feature'],
-    top_importance['MAE_Increase_AUD'],
-    xerr=top_importance['Importance_SD'],
-    color=TEAL,
-    capsize=3
-)
-
-ax.invert_yaxis()
-ax.axvline(0, color=GRAY, linewidth=1)
-
-ax.set_xlabel('Increase in MAE after Shuffling the Feature (AUD)')
-
-ax.set_title(
-    'Permutation Importance on Validation Data',
-    loc='left',
-    fontweight='bold'
-)
-
-save_figure(fig, 'predictive_feature_importance')
-
-
-# ==================== P3: Define candidate property groups ====================
-
-urban_supply = (
-    e.loc[e['property_group'].eq('Apartment')]
-    .groupby('area')
-    .size()
-    .nlargest(4)
-)
-
-urban_areas = list(urban_supply.index)
-
-comparison_areas = [
-    'Melbourne',
-    'Yarra',
-    'Port Phillip',
-    'Stonnington',
-    'Moreland',
-    'Yarra Ranges'
-]
+# ==================== Generate two-night segment price references ====================
 
 prediction_rows = []
-template_rows = []
 
-for area in comparison_areas:
-    for bedrooms in [1, 2, 3]:
-        property_group = (
-            'Cottage / guesthouse'
-            if area == 'Yarra Ranges'
-            else 'Apartment'
-        )
+for _, segment in sc.iterrows():
 
-        peers = q.loc[
-            q['area'].eq(area)
-            & q['bedrooms'].eq(bedrooms)
-            & q['accommodates'].between(
-                2 * bedrooms,
-                2 * bedrooms + 1
-            )
-            & q['property_group'].eq(property_group)
-        ]
-
-        if len(peers) < 20:
-            continue
-
-        template = peers[nums].median().to_dict()
-
-        # Use the same quotation scenario as the original notebook:
-        # June, weekday check-in, three days ahead, two-night stay.
-        template.update({
-            'area': area,
-            'property_group': property_group,
-            'quote_month': '6',
-            'quote_weekend': 0,
-            'bedrooms': bedrooms,
-            'accommodates': 2 * bedrooms,
-            'bath_num': 1 if bedrooms < 3 else 2,
-            'minimum_nights': 2,
-            'quote_nights': 2,
-            'quote_lead': 3
-        })
-
-        for feature in amen:
-            template[feature] = int(
-                peers[feature].mean() >= 0.5
-            )
-
-        template.update({
-            'WiFi': 1,
-            'Kitchen': 1,
-            'Air conditioning': 1,
-            'Self check-in': 1
-        })
-
-        if area == 'Yarra Ranges':
-            template.update({
-                'Free parking': 1,
-                'Garden': 1,
-                'Fireplace': 1
-            })
-        else:
-            template.update({
-                'Pool': 0,
-                'Hot tub': 0,
-                'Fireplace': 0
-            })
-
-        model_input = pd.DataFrame([template])[X.columns]
-
-        predicted_price = float(
-            fit.predict(model_input)[0]
-        )
-
-        matched = peers.loc[
-            peers['quote_nights'].eq(2)
-            & peers['minimum_nights'].le(2)
-        ]
-
-        prediction_rows.append({
-            'area': area,
-            'bedrooms': bedrooms,
-            'property_group': property_group,
-            'n': len(peers),
-            'model': predicted_price,
-            'matched_n': len(matched),
-            'matched_median': matched['price_aud'].median(),
-            'matched_p25': matched['price_aud'].quantile(0.25),
-            'matched_p75': matched['price_aud'].quantile(0.75),
-            'template': json.dumps(template, ensure_ascii=False)
-        })
-
-        template_rows.append(template)
-
-predictions = pd.DataFrame(prediction_rows)
-
-if predictions.empty:
-    raise ValueError(
-        'No candidate property groups contain at least 20 listings.'
-    )
-
-save_table(
-    predictions.drop(columns='template').round(2),
-    'predictive_candidate_quotes'
-)
-
-# Save the exact product definitions used to generate the quotes.
-predictions.to_csv(
-    CHARTS / 'predictive_candidate_quotes_with_templates.csv',
-    index=False,
-    encoding='utf-8-sig'
-)
-
-pd.DataFrame(template_rows)[X.columns].to_csv(
-    CHARTS / 'predictive_candidate_templates.csv',
-    index=False,
-    encoding='utf-8-sig'
-)
-
-
-# ==================== P3: Plot candidate product quotes ====================
-
-prediction_view = predictions.loc[
-    (
-        predictions['area'].isin(urban_areas)
-        & predictions['bedrooms'].isin([1, 2])
-    )
-    | (
-        predictions['area'].eq('Yarra Ranges')
-        & predictions['bedrooms'].eq(1)
-    )
-].copy()
-
-if not prediction_view.empty:
-    labels = [
-        f'{row.area}: {int(row.bedrooms)}BR'
-        for row in prediction_view.itertuples()
+    peers = q.loc[
+        q["area"].eq(segment["area"])
+        & q["property_group"].eq(segment["property_group"])
+        & q["bedrooms"].eq(segment["bedrooms"])
     ]
 
-    positions = np.arange(len(prediction_view))
-    height = 0.35
+    matched = peers.loc[
+        peers["quote_nights"].eq(2)
+        & peers["minimum_nights"].le(2)
+    ]
 
-    fig, ax = plt.subplots(
-        figsize=(11, max(5, len(prediction_view) * 0.65))
+    if matched.empty:
+        reference_price = np.nan
+
+    else:
+        reference_price = float(
+            np.median(
+                selected_model.predict(
+                    matched[FEATURES]
+                )
+            )
+        )
+
+    prediction_rows.append(
+        {
+            "area": segment["area"],
+            "property_group": segment["property_group"],
+            "bedrooms": int(segment["bedrooms"]),
+            "model": reference_price,
+            "matched_n": len(matched),
+            "matched_hosts": matched[GROUP].nunique(),
+            "matched_median": matched[TARGET].median(),
+            "matched_p25": matched[TARGET].quantile(0.25),
+            "matched_p75": matched[TARGET].quantile(0.75),
+            "quote_lead_p25": matched["quote_lead"].quantile(0.25),
+            "quote_lead_p75": matched["quote_lead"].quantile(0.75),
+        }
     )
 
-    ax.barh(
-        positions - height / 2,
-        prediction_view['model'],
-        height,
-        color=TEAL,
-        label='Model Reference Price'
-    )
+segment_predictions = pd.DataFrame(
+    prediction_rows
+)
 
-    ax.barh(
-        positions + height / 2,
-        prediction_view['matched_median'],
-        height,
-        color=GRAY,
-        label='Two-Night Peer Median'
-    )
+candidate_quotes = sc.merge(
+    segment_predictions,
+    on=[
+        "area",
+        "property_group",
+        "bedrooms",
+    ],
+    how="left",
+    validate="one_to_one",
+)
 
-    ax.set_yticks(positions, labels)
-    ax.invert_yaxis()
-    ax.set_xlabel('Advertised Nightly Price (AUD)')
+export_table(
+    candidate_quotes,
+    "predictive_candidate_quotes",
+)
 
-    ax.set_title(
-        'Candidate Products under a Standard Quote Scenario',
-        loc='left',
-        fontweight='bold'
-    )
+show_table(
+    candidate_quotes.loc[
+        candidate_quotes["n"].ge(50),
+        [
+            "area",
+            "property_group",
+            "bedrooms",
+            "n",
+            "model",
+            "matched_n",
+            "matched_median",
+        ],
+    ].round(2)
+)
 
-    ax.legend(frameon=False)
+# Segment references summarize model predictions for observed listings.
+# They are not independent test results, optimal prices, or future prices.
+# Two-night matching uses actual quoted stay duration and minimum-stay rules.
 
-    save_figure(fig, 'predictive_candidate_quotes')
 
+# ==================== Save the selected model ====================
 
-# ==================== Save the selected model and baselines ====================
-
-# The saved model contains preprocessing and the fitted estimator.
-joblib.dump(
-    fit,
-    MODELS / 'selected_price_model.joblib'
+model_path = (
+    MODELS / "selected_price_model.joblib"
 )
 
 joblib.dump(
-    {
-        'global_median': development_median,
-        'area_bedroom_medians': group_medians
-    },
-    MODELS / 'price_baselines.joblib'
+    selected_model,
+    model_path,
 )
 
-model_metadata = {
-    'selected_model': winner,
-    'target': 'Advertised nightly price in AUD',
-    'features': list(X.columns),
-    'numeric_features': nums,
-    'categorical_features': cats,
-    'validation_metrics': validation_results,
-    'test_metrics': test_results,
-    'split_listings': {
-        'train': len(train_index),
-        'validation': len(validation_index),
-        'test': len(test_index)
-    },
-    'missing_host_ids_excluded': missing_host_count,
-    'fitted_on': 'Development data: training plus validation',
-    'test_hosts_excluded_from_fitting': True,
-    'candidate_quote_scenario': {
-        'month': 'June',
-        'weekend_checkin': False,
-        'lead_days': 3,
-        'stay_nights': 2
-    },
-    'versions': {
-        package: version(package)
-        for package in [
-            'pandas',
-            'numpy',
-            'matplotlib',
-            'scikit-learn',
-            'joblib'
-        ]
-    }
+
+# ==================== Save feature schema ====================
+
+feature_schema = {
+    "target": TARGET,
+    "target_unit": "AUD per night",
+    "grouping_variable": GROUP,
+    "numeric_features": NUMERIC_FEATURES,
+    "categorical_features": CATEGORICAL_FEATURES,
+    "selected_model": winner,
+    "training_scope": (
+        "Confirmed non-Superhost entire-home listings "
+        "meeting the price-analysis scope"
+    ),
 }
 
-with open(
-    MODELS / 'price_model_metadata.json',
-    'w',
-    encoding='utf-8'
-) as file:
-    json.dump(model_metadata, file, indent=2, ensure_ascii=False)
-
-
-# ==================== Verify the saved model ====================
-
-loaded_model = joblib.load(
-    MODELS / 'selected_price_model.joblib'
+(MODELS / "price_model_features.json").write_text(
+    json.dumps(
+        feature_schema,
+        indent=2,
+    ),
+    encoding="utf-8",
 )
 
-verification_input = X.iloc[test_index[:5]]
 
-np.testing.assert_allclose(
-    loaded_model.predict(verification_input),
-    fit.predict(verification_input)
+# ==================== Save model metadata ====================
+
+package_versions = {
+    package: importlib.metadata.version(package)
+    for package in [
+        "numpy",
+        "pandas",
+        "scikit-learn",
+        "joblib",
+    ]
+}
+
+model_metadata = {
+    "selected_model": winner,
+    "selection_metric": "Validation MAE",
+    "validation": validation_results,
+    "test": test_results,
+    "split_listings": {
+        "training": len(train_index),
+        "validation": len(validation_index),
+        "test": len(test_index),
+    },
+    "split_hosts": {
+        "training": len(train_hosts),
+        "validation": len(validation_hosts),
+        "test": len(test_hosts),
+    },
+    "peer_baseline_mae_improvement": mae_improvement,
+    "saved_model": model_path.name,
+    "model_fit_sample": "Development sample",
+    "package_versions": package_versions,
+}
+
+(MODELS / "price_model_metadata.json").write_text(
+    json.dumps(
+        model_metadata,
+        indent=2,
+        allow_nan=False,
+    ),
+    encoding="utf-8",
 )
 
-print('\nSaved model verification passed.')
+
+# ==================== Generate predictive-analysis charts ====================
+
+# These functions read test.csv and importance.csv from the tables folder.
+
+viz.plot_model_match()
+viz.plot_model_error()
+viz.plot_model_drivers()
 
 
-# ==================== Report output locations ====================
+# ==================== Print completion summary ====================
 
-print('\nPredictive analysis completed.')
-print(f'Selected model: {winner}')
-print(f'Figures: {FIGURES.resolve()}')
-print(f'Tables: {CHARTS.resolve()}')
-print(f'Models: {MODELS.resolve()}')
+print()
+print("Predictive analysis completed.")
+print()
+
+print(f"Selected model: {winner}")
 
 print(
-    '\nInterpretation: the model predicts reference advertised prices, '
-    'not booking prices, occupancy, revenue, or profit. '
-    'Feature importance does not establish causal price premiums.'
+    "Final test MAE: "
+    f"A${test_results['Selected model']['MAE']:.2f} per night"
+)
+
+print(
+    "Final test median absolute error: "
+    f"A${test_results['Selected model']['MedAE']:.2f} per night"
+)
+
+print(
+    "Predictions within 25% of recorded listed prices: "
+    f"{test_results['Selected model']['within25']:.1%}"
+)
+
+if mae_improvement is not None:
+    print(
+        "MAE improvement over the area-bedroom baseline: "
+        f"{mae_improvement:.1%}"
+    )
+
+print()
+print(f"Segment price references: {len(candidate_quotes):,}")
+print(f"Figure directory: {F}")
+print(f"Table directory: {T}")
+print(f"Model directory: {MODELS}")
+
+print()
+print(
+    "Predictions represent reference nightly listed prices, "
+    "not actual transaction prices or profit-maximizing prices."
 )

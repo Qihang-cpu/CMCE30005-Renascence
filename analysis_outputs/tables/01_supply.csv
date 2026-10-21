@@ -1,31 +1,31 @@
-﻿area,entire_home_listings
-Melbourne,5538
-Port Phillip,1535
-Yarra Ranges,905
-Yarra,894
-Stonnington,702
-Moreland,373
-Whitehorse,307
-Maribyrnong,286
-Wyndham,285
-Bayside,266
-Monash,264
-Boroondara,254
-Glen Eira,252
-Darebin,235
-Moonee Valley,216
-Kingston,187
-Hume,182
-Casey,180
-Frankston,170
-Hobsons Bay,168
-Brimbank,151
-Cardinia,134
-Melton,124
-Manningham,118
-Banyule,111
-Whittlesea,106
-Maroondah,88
-Knox,85
-Nillumbik,73
-Greater Dandenong,63
+﻿Area,Listings,Share_of_supply_sample_pct
+Melbourne,3234,39.3718042366691
+Port Phillip,920,11.200389578767957
+Yarra,433,5.271487703920137
+Stonnington,393,4.784514243973703
+Yarra Ranges,309,3.761869978086194
+Whitehorse,227,2.763574385196007
+Wyndham,226,2.751400048697346
+Moreland,224,2.7270513757000243
+Maribyrnong,177,2.154857560262966
+Monash,175,2.130508887265644
+Bayside,168,2.0452885317750185
+Boroondara,157,1.9113708302897492
+Darebin,150,1.8261504747991233
+Glen Eira,145,1.7652787923058193
+Casey,132,1.6070124178232286
+Moonee Valley,126,1.5339663988312637
+Kingston,115,1.4000486973459947
+Hume,101,1.229607986364743
+Brimbank,101,1.229607986364743
+Melton,91,1.107864621378135
+Frankston,91,1.107864621378135
+Hobsons Bay,90,1.095690284879474
+Banyule,71,0.8643778914049185
+Cardinia,69,0.8400292184075968
+Manningham,68,0.8278548819089359
+Whittlesea,62,0.754808862916971
+Maroondah,48,0.5843681519357196
+Knox,43,0.5234964694424153
+Greater Dandenong,36,0.4382761139517896
+Nillumbik,32,0.38957876795714635
