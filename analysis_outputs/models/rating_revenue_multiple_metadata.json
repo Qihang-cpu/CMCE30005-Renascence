@@ -1,0 +1,7 @@
+{
+  "rating_mean":4.6719860065,
+  "sample_size":3716,
+  "minimum_cumulative_reviews":5,
+  "linear_formula":"annual_revenue ~ rating + bedrooms + accommodates + bathrooms + minimum_nights + C(area) + C(property_group)",
+  "quadratic_formula":"annual_revenue ~ rating_centered + I(rating_centered ** 2) + bedrooms + accommodates + bathrooms + minimum_nights + C(area) + C(property_group)"
+}

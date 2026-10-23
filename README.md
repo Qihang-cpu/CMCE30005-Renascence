@@ -23,7 +23,6 @@ Develop an evidence-based recommendation covering:
 - **Product:** property type, guest capacity and accommodation experience.
 - **Positioning:** amenities, photographs and listing-message priorities.
 - **Launch price:** an initial nightly price supported by comparable listings and a pricing model.
-- **Stay rules:** an initial minimum-stay requirement.
 - **Validation:** adjustments based on actual booking and cost information.
 
 The project focuses on existing properties or properties being considered for management. It does not estimate property acquisition returns.
@@ -32,7 +31,7 @@ The project focuses on existing properties or properties being considered for ma
 
 ## 2. Business Problem and Challenges 
 
-**Our problem will be: For small operators preparing to list or act as agents for Airbnb listings in Melbourne, how can they select appropriate rental products based on market data and determine the initial listing price and operation plan?**
+**Our problem will be: For new operators preparing to list or act as agents for Airbnb listings in Melbourne, how can they select appropriate rental products based on market data and determine the initial listing price and operation plan?**
 
 ### 2.1 Problem Split
 
@@ -41,7 +40,6 @@ Here will be our research questions that how we split our research problem step 
 | Questions | Methods |
 | :--- | :--- |
 | Which accommodation products are worth considering? | Comparison of locations, property types, bedroom counts, and guest capacities|
-| Which markets show historical review activity, and which experiences could be highlighted as selling points? | Analysis of review activity and guest-experience keywords |
 | What reference price is appropriate for a specified property? | Listing-price prediction model |
 | Under the defined conditions, which option should be tested first, and at what initial price? | Candidate screening and trial-pricing rules |
 
@@ -153,19 +151,27 @@ The project used Melbourne Airbnb data from June 2026, consisting of three datas
   - Work and business.
 - Theme measures captured keyword mentions only; they did not measure sentiment.
 
+
 ### 3.3 Defining the Analysis Scope
 
-The sample was progressively restricted to properties relevant to the business problem.
+The sample was progressively restricted to listings relevant to the business problem, with a focus on the non-Superhost market.
 
-| Filtering Stage | Properties Retained |
+| Filtering Stage | Listings Retained |
 |---|---:|
-| Original property records | 25,728 |
-| Properties captured in the current city scrape | 18,885 |
-| Entire homes and apartments | 14,252 |
-| Properties meeting the mainstream short-stay criteria | 10,182 |
+| Original listing records | 25,728 |
+| Listings captured in the current city scrape | 18,885 |
+| Listings explicitly identified as non-Superhost | 11,674 |
+| Non-Superhost entire homes and apartments | 8,214 |
+| Nightly listing price between AUD 20 and AUD 2,000 | 8,024 |
+| 1–3 bedrooms and capacity for 1–8 guests | 6,808 |
+| Minimum stay of 1–7 nights | 6,533 |
+| Quoted stay duration of 1–7 nights | 6,455 |
+| Quoted check-in date 0–30 days after scraping | 5,673 |
 
 The mainstream short-stay criteria were:
 
+- Explicitly identified as **non-Superhost**.
+- Listed as **Entire home/apt**.
 - Nightly listing price between **AUD 20 and AUD 2,000**.
 - **1–3 bedrooms**.
 - Capacity for **1–8 guests**.
@@ -175,8 +181,14 @@ The mainstream short-stay criteria were:
 
 Two main analysis samples were established:
 
-- **14,252 properties** for analysis of the entire-property market.
-- **10,182 properties** for comparable-price analysis and predictive modelling.
+- **8,214 listings** for analysis of non-Superhost entire-home supply and market context.
+- **5,673 listings** meeting the short-stay criteria for comparable-price analysis and subsequent predictive modelling.
+
+Further eligibility requirements were applied within individual analyses, including sufficient review history and two-night comparability where relevant.
+
+Superhost listings were excluded to align the analysis with the target market, rather than because their records were considered invalid. Listings outside the selected scope remained in the original data.
+
+Non-Superhost status does not by itself establish that a host is an individual or a small-scale operator. The findings therefore apply to the defined non-Superhost sample and should not automatically be generalised to all hosts, long-stay accommodation, or specialised property types.
 
 
 ### 3.4 Visualizations and Deliverables
@@ -193,61 +205,75 @@ Here will be a discription about the main charts and graphs we posted in the out
 | **Product recommendation cards** | Specify product features, launch prices and stay rules |
 | **30-day action plan** | Guide monitoring and price adjustments |
 
-### 3.5  Exploratory Data Analysis (EDA)
+### 3.5 Exploratory Data Analysis (EDA)
 
 #### Missing Data Assessment
 
-Missingness was assessed across the original property sample.
+Missingness was assessed across the **11,674 listings explicitly identified as non-Superhost in the current city scrape**, before restricting the sample to entire homes and applying the short-stay criteria.
 
 | Variable | Missing Percentage |
 |---|---:|
-| Nightly listing price | 25.47% |
-| Bedrooms | 18.19% |
-| Parsed bathroom count | 0.10% |
+| Nightly listing price | 1.61% |
+| Bedrooms | 15.73% |
+| Bathroom count | 0.20% |
 | Area | 0.00% |
 
 Implications:
 
 - Different analyses required different sample definitions.
-- Properties without prices could still contribute to supply analysis.
-- Price comparisons required valid price information.
+- Listings without valid prices could still contribute to supply analysis.
+- Price comparisons and predictive modelling required valid price information.
+- Missing bedroom information prevented some listings from entering comparisons defined by bedroom count.
+- These percentages describe the current non-Superhost sample, rather than all 25,728 original listing records.
 
 #### Price Distribution
 
-For properties with positive prices in the current city scrape of entire homes and apartments:
+Among the **8,214 non-Superhost entire-home listings**, **8,094** had positive nightly listing prices.
 
-- Mean nightly listing price: **AUD 367.81**.
-- Median nightly listing price: **AUD 280.06**.
-- Maximum nightly listing price: **AUD 23,149.50**.
+Their observed price distribution was:
+
+- Mean nightly listing price: **AUD 372.52**.
+- Median nightly listing price: **AUD 281.79**.
+- Maximum nightly listing price: **AUD 13,631.00**.
+- P25–P75 range: **AUD 210.25–392.00**.
 
 The distribution had a long right tail:
 
-- A small number of expensive properties increased the mean.
-- The median provided a more representative measure for market comparisons.
-- Subsequent analysis used medians and quartiles to describe comparable prices.
+- A small number of expensive listings increased the mean.
+- The median was less sensitive to extreme prices and provided a useful measure of the typical listing-price level.
+- Subsequent comparisons used medians and quartiles within comparable product segments.
+- The histogram displayed prices up to the **99th percentile, AUD 1,889.12**, for readability; higher-priced records remained in the underlying data.
+
+These statistics describe the positive-price entire-home sample before applying the restricted short-stay price criteria.
 
 #### Implications for Subsequent Analysis
 
-- Comparable property groups were defined using:
+- Comparable product segments were defined using:
   - Area.
-  - Property type.
-  - Number of bedrooms.
-  - Guest capacity.
-- These groupings reduced the influence of differences in property composition.
-- Market comparisons and modelling used explicitly defined samples.
+  - Property group.
+  - Bedroom count.
+- Guest capacity was considered in sample eligibility and price modelling, rather than used as an additional segment identifier.
+- Comparisons within segments reduced the influence of differences in property composition.
+- The concentration of listings in central areas required caution when interpreting results for less-represented areas.
+- Market comparisons and predictive modelling used explicitly defined samples.
+- Observed listing prices represented advertised prices and did not establish actual transaction prices or booking outcomes.
 
 ### 3.6 Outputs of the Data Stage
 
 The data stage produced:
 
-- Cleaned and linked property-level data.
+- Cleaned listing records linked to aggregated review and calendar information at the listing level.
 - Standardised numeric, date, property-type, and amenity variables.
-- Review measures based on a consistent observation window.
-- Clearly defined samples for market analysis and price modelling.
-- Evidence supporting the use of medians, quartiles, and comparable property groups.
+- Review-activity measures calculated using a consistent observation window.
+- A clearly defined target market of listings explicitly identified as non-Superhost.
+- **8,214 entire-home listings** for supply and market-context analysis.
+- **5,673 listings** meeting the short-stay criteria for comparable-price analysis and subsequent predictive modelling.
+- Evidence supporting the use of medians and quartiles to describe the skewed listing-price distribution.
+- Comparable product segments defined by **area, property group, and bedroom count**.
 
-At this stage, no final location selection or launch price had been determined.
+Individual analyses applied additional eligibility requirements where necessary, so their final sample sizes could differ.
 
+At this stage, no final product selection or initial listing-price recommendation had been determined.
 ---
 
 ## 4. Analysis Roadmap 
@@ -472,37 +498,43 @@ Validation`"]
   - Unavailable dates do not necessarily indicate bookings.
   - Monthly patterns were described, not forecast.
 
-### 5.7 D6: Ratings and Estimated Annual Revenue
+### 5.7 D6: Guest Ratings and Estimated Annual Revenue
 
-- **Objective:** Examine whether guest ratings are associated with estimated annual revenue after accounting for property differences.
+- **Purpose:** Examine whether guest ratings are associated with estimated annual revenue after accounting for differences in listing characteristics.
 
-- **Methods:**
-  - Use **multiple log-linear regression**.
-  - Set `log(1 + estimated annual revenue)` as the dependent variable and overall guest rating as the main predictor.
+- **Method:**
+  - Use multiple linear regression with `log(1 + estimated annual revenue)` as the dependent variable.
+  - Include the overall guest rating as the main explanatory variable.
   - Control for area, property type, bedroom count, and guest capacity.
-  - Analyse **7,750 listings** and calculate standard errors clustered across **3,868 hosts**.
+  - Analyse **7,750 listings**, with standard errors clustered by **3,868 hosts**.
+  - Use a separate eligible sample for this analysis rather than the restricted short-stay price-modelling sample.
 
-- **Key findings:**
-  - The rating coefficient was **2.463**, with a **95% confidence interval of 1.952–2.973** and **p < 0.001**.
-  - The model explained approximately **9.39%** of the variation in log-transformed estimated revenue.
+- **Main findings:**
+  - The rating coefficient was **2.463**, with a **95% confidence interval of 1.952–2.973** and **p < .001**.
+  - The model explained approximately **9.39%** of the variation in log-transformed estimated annual revenue.
 
-  This means: **Higher ratings were significantly associated with higher estimated annual revenue after controlling for the included property characteristics.**
+  These results indicate that **higher guest ratings were significantly associated with higher estimated annual revenue after controlling for the included listing characteristics**.
 
-
-- **Implication:** Guest ratings are a relevant operational indicator, but the model’s limited explanatory power means they should be considered alongside other factors when assessing revenue.
+- **Implications:** Guest ratings provide relevant information about estimated revenue differences. However, the model's limited explanatory power means that ratings should be considered alongside other property and operating factors.
 
 - **Limitations:**
-  - Estimated annual revenue represents neither actual income nor profit.
-  - The positive association does not establish that improving ratings causes revenue growth.
-  - The analysis does not establish a relationship between ratings and nightly listing prices.
+  - Estimated annual revenue is a proxy and does not represent verified revenue or profit.
+  - The association does not establish that improving ratings causes revenue to increase.
+  - This regression does not directly test the relationship between ratings and nightly listing prices.
+  - Overall ratings and estimated annual revenue may cover different time periods.
+  - These findings do not establish a revenue-maximising price or justify ranking products by expected profit.
 
 ### 5.8 Outputs
 
-- Urban apartment candidates for further evaluation.
-- Review-activity benchmarks.
-- Evidence for differentiated product positioning.
-- Market references for minimum-stay settings.
-- Inputs for subsequent price prediction and rule-based decision-making.
+- Area- and property-type comparisons describing the non-Superhost entire-home market.
+- Historical review-activity measures supporting the comparison of candidate product segments.
+- Evidence on listing characteristics and amenities to inform product positioning.
+- Market information on minimum-stay requirements.
+- An exploratory assessment of the association between guest ratings and estimated annual revenue.
+- Inputs for subsequent listing-price prediction, comparable-price analysis, and rule-based product recommendations.
+
+The descriptive stage provided evidence for further evaluation; final product recommendations and initial reference prices were determined in the subsequent stages.
+
 
 ---
 
@@ -531,9 +563,9 @@ Validation`"]
 
 | Model | Validation MAE (AUD) | Validation MedAE (AUD) | Predictions Within 25% |
 |---|---:|---:|---:|
-| Log-target ridge regression | 79.30 | 52.16 | 60.5% |
-| Random forest | 79.23 | 46.51 | 61.8% |
-| Gradient boosting | 76.24 | 46.91 | 63.4% |
+| Log-target ridge regression | 79.36 | 52.16 | 60.5% |
+| Random forest | 76.10 | 46.51 | 61.8% |
+| Gradient boosting | 74.89 | 46.91 | 63.4% |
 
 - **Gradient boosting was selected** because it achieved the lowest validation MAE.
 - The selected model was refitted on the combined training and validation sets.
@@ -544,7 +576,7 @@ Validation`"]
 
   **Modelling Sample**
 
-- Used **10,182 entire properties** meeting the project's mainstream short-stay criteria.
+- Used ** 5673 entire properties** meeting the project's mainstream short-stay criteria.
 - Restricted the sample by price, bedrooms, capacity, minimum stay, quoted stay duration, and booking lead time.
 
 The variables below will be used for all the three models
@@ -589,26 +621,8 @@ The amenity indicators covered:
 - **Review counts and themes:** Used in descriptive analysis and decision-making; excluded from the pricing model.
 - **Superhost status:** Not included in the current model.
 
-### 6.3 Data Splitting and Preprocessing
 
-  **Host-Based Data Splitting**
-
-- Split the data by host ID to reduce leakage from similar properties managed by the same host.
-- Created:
-  - **Training set:** 5,995 properties.
-  - **Validation set:** 2,103 properties.
-  - **Test set:** 2,084 properties.
-- Kept hosts separate across the training, validation, and test sets.
-
-  **Preprocessing**
-
-- Filled missing numeric values using medians learned from the training data.
-- Added missing-value indicators where applicable.
-- Standardised numeric predictors.
-- Applied one-hot encoding to categorical predictors.
-- Kept preprocessing inside the modelling pipeline to avoid using evaluation data during training.
-
-### 6.4 Evaluation Methods and Results
+### 6.3 Evaluation Methods and Results
 
 #### Evaluation Metrics
 
@@ -640,7 +654,7 @@ Models were selected using validation-set MAE. The final evaluation used a separ
 - The typical absolute pricing error remained approximately **AUD 51 per night**.
 - These results support using the model as an initial pricing reference, followed by checks against comparable listings.
 
-### 6.5 Model Interpretation
+### 6.4 Model Interpretation
 
 - Used **permutation importance** on the validation set.
 - Randomly shuffled one predictor at a time and measured the increase in MAE.
@@ -650,7 +664,7 @@ Models were selected using validation-set MAE. The final evaluation used a separ
 - Feature importance describes predictive contribution; it does not show how much installing an amenity or changing a property feature would increase revenue.
 - The separate rating–revenue regression examines associations with estimated annual revenue and does not determine the pricing model’s feature importance.
 
-### 6.6 Candidate Price Predictions
+### 6.5 Candidate Price Predictions
 
 #### Comparable Quotation Approach
 
@@ -672,9 +686,9 @@ Models were selected using validation-set MAE. The final evaluation used a separ
 
 | Candidate Product | Model Reference Price (AUD/Night) |
 |---|---:|
-| Melbourne three-bedroom apartment; approximately six guests | **414.2** |
-| Yarra one-bedroom apartment; approximately two guests | **230.7** |
-| Melbourne one-bedroom apartment; approximately two guests | **220.0** |
+| Melbourne three-bedroom apartment; approximately six guests | **406.4** |
+| Yarra one-bedroom apartment; approximately two guests | **228.3** |
+| Melbourne one-bedroom apartment; approximately two guests | **216.1** |
 
 - Predictions were generated for the wider candidate set before the final product selection.
 - Product selection combined sample-size requirements, independent host counts, review history, and review activity.
@@ -744,18 +758,6 @@ Where:
 - $H_i$: Number of comparable properties with at least one year of review history.
 - $Q_i$: Number of comparable two-night quotations.
 - $\mathbf{1}(\cdot)$: Equals 1 when all three sample requirements are satisfied and 0 otherwise.
-
-  **Scenario-Based Product Selection**
-
-| Scenario | Objective and Conditions | Selection Rule |
-|---|---|---|
-| **A: Urban one-bedroom pilot** | One-bedroom apartments accommodating 2–3 guests; satisfy sample requirements and the review-activity threshold | Select the eligible area with the highest median listing price |
-| **B: Conditional four-person property** | Two-bedroom apartments accommodating 4–5 guests; satisfy sample requirements | Select the eligible area with the highest median annual review count |
-| **C: Conditional woodland property** | Assume an existing one-bedroom cottage/guest property in Yarra Ranges with the specified amenities; require at least 30 comparable two-night quotations | Keep the location fixed and generate a conditional quotation |
-
-- Scenarios B and C are conditional client scenarios.
-- The data do not establish that the client owns these properties.
-- Scenario C assumes a fireplace, free on-site parking, and a garden, alongside the other specified amenities.
 
 #### Scenario A: Review-Activity Constraint
 
@@ -871,11 +873,11 @@ This objective minimises the distance from the model prediction within market-ba
 
 #### Selected Products and Prices
 
-| Scenario | Product and Location | Model Reference Price (AUD/Night) | Trial Price (AUD/Night) | Minimum Stay |
-|---|---|---:|---:|---|
-| **A: Melbourne Three-Bedroom Option** | Entire three-bedroom apartment in Melbourne; approximately six guests | 414.2 | **410** | Set according to turnover costs and comparable listings |
-| **B: Yarra One-Bedroom Option** | Entire one-bedroom apartment in Yarra; approximately two guests | 230.7 | **230** | Set according to turnover costs and comparable listings |
-| **C: Melbourne One-Bedroom Option** | Entire one-bedroom apartment in Melbourne; approximately two guests | 220.0 | **220** | Set according to turnover costs and comparable listings |
+| Scenario | Product and Location | Model Reference Price (AUD/Night) | Trial Price (AUD/Night) |
+|---|---|---:|---:|
+| **A: Melbourne Three-Bedroom Option** | Entire three-bedroom apartment in Melbourne; approximately six guests | 406.4 | **410** | 
+| **B: Yarra One-Bedroom Option** | Entire one-bedroom apartment in Yarra; approximately two guests | 230.7 | **228.3** |
+| **C: Melbourne One-Bedroom Option** | Entire one-bedroom apartment in Melbourne; approximately two guests | 220.0 | **216.1** |
 
 #### Comparable-Market Price Constraints
 
@@ -1050,9 +1052,9 @@ The following levels are approximately 10% below and above the starting prices, 
 
 | Proposal | Lower Test Price | Starting Price | Higher Test Price |
 |---|---:|---:|---:|
-| A: Yarra one-bedroom apartment | AUD 220 | AUD 240 | AUD 260 |
-| B: Melbourne two-bedroom apartment | AUD 230 | AUD 250 | AUD 280 |
-| C: Yarra Ranges specialty property | AUD 290 | AUD 320 | AUD 350 |
+| A: Melbourne: three-bedroom apartment | AUD 380 | AUD 420 | AUD 460 |
+| B: Yarra: one-bedroom apartment | AUD 200 | AUD 240 | AUD 280 |
+| C: Melbourne: one-bedroom apartment | AUD 190 | AUD 220 | AUD 250 |
 
 - Change one pricing setting at a time to make results easier to interpret.
 - Account for differences in day of the week, dates, and booking lead time when comparing results.
@@ -1064,9 +1066,9 @@ Use **trial price × assumed booked nights** to illustrate the amounts associate
 
 | Proposal | Nightly Trial Price | Assuming 10 Booked Nights | Assuming 15 Booked Nights | Assuming 20 Booked Nights |
 |---|---:|---:|---:|---:|
-| A: Yarra one-bedroom apartment | AUD 240 | AUD 2,400 | AUD 3,600 | AUD 4,800 |
-| B: Melbourne two-bedroom apartment | AUD 250 | AUD 2,500 | AUD 3,750 | AUD 5,000 |
-| C: Yarra Ranges specialty property | AUD 320 | AUD 3,200 | AUD 4,800 | AUD 6,400 |
+| A: Melbourne: three-bedroom apartment | AUD 410 | AUD 4,100 | AUD 6,150 | AUD 8,200 |
+| B: Yarra: one-bedroom apartment | AUD 230 | AUD 2,300 | AUD 3,450 | AUD 4,600 |
+| C: Melbourne: one-bedroom apartment | AUD 220 | AUD 2,200 | AUD 3,300 | AUD 4,400 |
 
 These are illustrative financial scenarios, **not revenue forecasts or net profit estimates**. Actual evaluation must also incorporate fees, variable costs, and property holding costs.
 
@@ -1139,9 +1141,9 @@ The model's ability to match listing prices evaluates the pricing tool only. **T
 
 | Model | MAE (AUD) | MedAE (AUD) | RMSE (AUD) | R² | Within 25% |
 |---|---:|---:|---:|---:|---:|
-| Log-target ridge regression | 79.302 | 52.155 | 146.039 | 0.340 | 60.5% |
-| Random forest | 79.227 | 46.506 | 146.371 | 0.337 | 61.8% |
-| Gradient boosting | 76.243 | 46.913 | 144.793 | 0.351 | 63.4% |
+| Log-target ridge regression | 79.36 | 52.155 | 146.039 | 0.340 | 60.5% |
+| Random forest | 76.10 | 46.506 | 146.371 | 0.337 | 61.8% |
+| Gradient boosting | 74.89 | 46.913 | 144.793 | 0.351 | 63.4% |
 
 - Gradient boosting was selected because it achieved the lowest validation MAE.
 

@@ -832,60 +832,273 @@ export_table(
 )
 
 
+# ==================== Inspect model reference prices ====================
+
+print(f"Predictive input file: {candidate_path.resolve()}")
+
+print(
+    selected[
+        [
+            "area",
+            "property_group",
+            "bedrooms",
+            "matched_n",
+            "matched_median",
+            "model",
+        ]
+    ].to_string(index=False)
+)
+
+
+
 # ==================== Generate recommendation charts ====================
 
-chart_functions = [
-    (
-        "18_recommended_prices",
-        viz.plot_recommended_prices,
-    ),
-    (
-        "19_decision_map",
-        viz.plot_decision_map,
-    ),
-]
+import os
+import subprocess
+import matplotlib
+import matplotlib.pyplot as plt
 
-chart_results = []
 
-for name, function in chart_functions:
+def plot_model_reference_prices():
+    """Compare observed listing prices with median model predictions."""
+
+    required = [
+        "area",
+        "property_group",
+        "bedrooms",
+        "matched_median",
+        "model",
+    ]
+
+    missing = [
+        column for column in required
+        if column not in selected.columns
+    ]
+
+    if missing:
+        raise ValueError(
+            f"Missing chart columns: {missing}"
+        )
+
+    data = selected[required].copy()
+
+    for column in ["bedrooms", "matched_median", "model"]:
+        data[column] = pd.to_numeric(
+            data[column],
+            errors="coerce",
+        )
+
+    numeric_values = data[
+        ["bedrooms", "matched_median", "model"]
+    ].to_numpy(dtype=float)
+
+    if data.empty or not np.isfinite(numeric_values).all():
+        raise ValueError(
+            "Chart data must contain finite numeric values."
+        )
+
+    if data[["matched_median", "model"]].le(0).any().any():
+        raise ValueError(
+            "Observed and model-estimated prices must be positive."
+        )
+
+    positions = np.arange(len(data))
+    width = 0.32
+
+    labels = [
+        f"{row.area}\n{int(row.bedrooms)}-bedroom apartment"
+        for _, row in data.iterrows()
+    ]
+    
+    with plt.rc_context({
+        "font.family": "DejaVu Sans",
+        "font.size": 11,
+        "axes.unicode_minus": False,
+        "figure.facecolor": "white",
+        "axes.facecolor": "white",
+        "savefig.facecolor": "white",
+    }):
+        fig, ax = plt.subplots(figsize=(12, 6.5))
+
+        observed_bars = ax.bar(
+            positions - width / 2,
+            data["matched_median"].to_numpy(dtype=float),
+            width=width,
+            color="#C9D2D5",
+            label="Observed comparable listing price (median)",
+        )
+
+        model_bars = ax.bar(
+            positions + width / 2,
+            data["model"].to_numpy(dtype=float),
+            width=width,
+            color="#168A85",
+            label="Model-estimated reference price",
+        )
+
+        for bars in [observed_bars, model_bars]:
+            ax.bar_label(
+                bars,
+                fmt="%.1f",
+                padding=6,
+                fontsize=11,
+                fontweight="bold",
+                color="#183C4A",
+            )
+
+        maximum_price = data[
+            ["matched_median", "model"]
+        ].max().max()
+
+        ax.set_ylim(0, maximum_price * 1.30)
+        ax.set_xticks(positions, labels)
+        ax.set_ylabel("Listing price (AUD per night)")
+
+        ax.set_title(
+            "Observed Listing Prices and Model-Estimated Reference Prices",
+            loc="left",
+            fontsize=14,
+            fontweight="bold",
+            pad=20,
+        )
+
+        ax.legend(
+            frameon=False,
+            loc="upper right",
+            fontsize=10,
+        )
+
+        ax.grid(axis="y", alpha=0.18)
+        ax.set_axisbelow(True)
+
+        for spine in ["top", "right", "left"]:
+            ax.spines[spine].set_visible(False)
+
+        ax.spines["bottom"].set_color("#C5D1D4")
+
+        fig.tight_layout()
+
+        F.mkdir(parents=True, exist_ok=True)
+        output_path = F / "18_recommended_prices.png"
+
+        try:
+            fig.savefig(
+                output_path,
+                dpi=300,
+                bbox_inches="tight",
+            )
+        finally:
+            plt.close(fig)
+
+    return output_path
+
+
+def open_saved_chart(path):
+    """Open the saved image independently of the Matplotlib backend."""
+
+    path = Path(path).resolve()
 
     try:
-        function()
+        if sys.platform == "darwin":
+            subprocess.run(
+                ["open", str(path)],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=15,
+            )
+
+        elif sys.platform == "win32":
+            os.startfile(str(path))
+
+        elif os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"):
+            subprocess.run(
+                ["xdg-open", str(path)],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=15,
+            )
+
+        else:
+            print(
+                "Automatic preview is unavailable in this environment."
+            )
 
     except (
-        FileNotFoundError,
-        KeyError,
-        ValueError,
-        TypeError,
-        IndexError,
+        OSError,
+        subprocess.SubprocessError,
     ) as error:
+        print(f"Automatic preview unavailable: {error}")
 
-        chart_results.append(
-            {
-                "Chart": name,
-                "Status": "Skipped",
-                "Details": str(error),
-            }
-        )
+    print(f"Open chart manually if needed: {path}")
 
-        print(f"Skipped {name}: {error}")
 
-    else:
+chart_results = []
+price_chart_path = None
 
-        chart_results.append(
-            {
-                "Chart": name,
-                "Status": "Saved",
-                "Details": "",
-            }
-        )
+print()
+print("Generating recommendation charts...")
+print(f"Matplotlib backend: {matplotlib.get_backend()}")
 
-        print(f"Saved {name}")
+# Generate the updated price comparison directly from selected.
+try:
+    price_chart_path = plot_model_reference_prices()
+
+except Exception as error:
+    chart_results.append({
+        "Chart": "18_recommended_prices",
+        "Status": "Failed",
+        "Details": f"{type(error).__name__}: {error}",
+    })
+
+    print(
+        "Failed 18_recommended_prices: "
+        f"{type(error).__name__}: {error}"
+    )
+
+else:
+    chart_results.append({
+        "Chart": "18_recommended_prices",
+        "Status": "Saved",
+        "Details": str(price_chart_path.resolve()),
+    })
+
+    print(f"Saved: {price_chart_path.resolve()}")
+
+# Retain the existing decision-map function.
+try:
+    viz.plot_decision_map()
+
+except Exception as error:
+    chart_results.append({
+        "Chart": "19_decision_map",
+        "Status": "Failed",
+        "Details": f"{type(error).__name__}: {error}",
+    })
+
+    print(
+        "Failed 19_decision_map: "
+        f"{type(error).__name__}: {error}"
+    )
+
+else:
+    chart_results.append({
+        "Chart": "19_decision_map",
+        "Status": "Completed",
+        "Details": "Existing visualization function completed.",
+    })
+
+    print("Completed: 19_decision_map")
 
 export_table(
     pd.DataFrame(chart_results),
     "prescriptive_chart_generation_report",
 )
+
+# Open the saved price chart even when a non-interactive backend is used.
+if price_chart_path is not None:
+    open_saved_chart(price_chart_path)
 
 
 # ==================== Print completion summary ====================

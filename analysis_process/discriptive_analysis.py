@@ -942,3 +942,307 @@ print(f"Charts skipped: {skipped_count}")
 print()
 print(f"Figure directory: {F}")
 print(f"Table directory: {T}")
+
+# ==================== Install missing packages ====================
+import importlib.util
+import subprocess
+import sys
+
+for package in ["numpy", "pandas", "statsmodels"]:
+    if importlib.util.find_spec(package) is None:
+        subprocess.check_call(
+            [sys.executable, "-m", "pip", "install", package]
+        )
+
+
+# ==================== Import packages ====================
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import statsmodels.formula.api as smf
+
+
+# ==================== Define output folders ====================
+OUTPUT_DIR = Path("analysis_outputs")
+MODEL_DIR = OUTPUT_DIR / "models"
+TABLE_DIR = OUTPUT_DIR / "tables"
+
+MODEL_DIR.mkdir(parents=True, exist_ok=True)
+TABLE_DIR.mkdir(parents=True, exist_ok=True)
+
+
+# ==================== Prepare the analysis sample ====================
+# q must be created by the project's earlier cleaning steps.
+# Apply the same rating and review-count rules as D6.
+
+column_mapping = {
+    "estimated_revenue_l365d": "annual_revenue",
+    "review_scores_rating": "rating",
+    "number_of_reviews": "review_count",
+    "bedrooms": "bedrooms",
+    "accommodates": "accommodates",
+    "bath_num": "bathrooms",
+    "minimum_nights": "minimum_nights",
+    "area": "area",
+    "property_group": "property_group",
+}
+
+missing_columns = set(column_mapping) - set(q.columns)
+
+if missing_columns:
+    raise ValueError(
+        f"Required columns are missing: {sorted(missing_columns)}"
+    )
+
+data = q[list(column_mapping)].rename(
+    columns=column_mapping
+).copy()
+
+numeric_columns = [
+    "annual_revenue",
+    "rating",
+    "review_count",
+    "bedrooms",
+    "accommodates",
+    "bathrooms",
+    "minimum_nights",
+]
+
+for column in numeric_columns:
+    data[column] = pd.to_numeric(data[column], errors="coerce")
+
+data[numeric_columns] = data[numeric_columns].replace(
+    [np.inf, -np.inf], np.nan
+)
+
+data = data.loc[
+    data["rating"].between(1, 5)
+    & data["review_count"].ge(5)
+    & data["annual_revenue"].ge(0)
+].copy()
+
+sample_before_complete_cases = len(data)
+
+# Use complete cases so both models use exactly the same observations.
+data = data.dropna(subset=list(column_mapping.values())).copy()
+
+for column in ["area", "property_group"]:
+    data[column] = data[column].astype(str)
+
+if len(data) < 30 or data["rating"].nunique() < 3:
+    raise ValueError(
+        "Insufficient observations or rating variation."
+    )
+
+print(f"Eligible D6 observations: {sample_before_complete_cases:,}")
+print(f"Complete-case regression sample: {len(data):,}")
+print(
+    "Excluded due to missing model variables: "
+    f"{sample_before_complete_cases - len(data):,}"
+)
+
+
+# ==================== Fit multiple linear regression ====================
+# C() automatically creates dummy variables for categorical controls.
+# HC3 provides heteroskedasticity-robust standard errors.
+
+control_terms = (
+    "bedrooms + accommodates + bathrooms + minimum_nights"
+    " + C(area) + C(property_group)"
+)
+
+linear_formula = (
+    "annual_revenue ~ rating + " + control_terms
+)
+
+multiple_model = smf.ols(
+    formula=linear_formula,
+    data=data,
+).fit(cov_type="HC3")
+
+print("\nMultiple linear regression")
+print(multiple_model.summary())
+
+# Check that the model matrix is not exactly rank deficient.
+design_rank = np.linalg.matrix_rank(multiple_model.model.exog)
+design_columns = multiple_model.model.exog.shape[1]
+
+if design_rank < design_columns:
+    raise ValueError(
+        "The model contains exactly collinear predictors. "
+        "Review the control variables before interpreting coefficients."
+    )
+
+
+# ==================== Check for a nonlinear rating relationship ====================
+# Centering makes the squared term easier to estimate and interpret.
+rating_mean = data["rating"].mean()
+
+data["rating_centered"] = data["rating"] - rating_mean
+
+quadratic_formula = (
+    "annual_revenue ~ rating_centered"
+    " + I(rating_centered ** 2) + " + control_terms
+)
+
+quadratic_model = smf.ols(
+    formula=quadratic_formula,
+    data=data,
+).fit(cov_type="HC3")
+
+print("\nMultiple regression with a quadratic rating term")
+print(quadratic_model.summary())
+
+
+# ==================== Save fitted models ====================
+multiple_model.save(
+    str(MODEL_DIR / "rating_revenue_multiple_ols_hc3.pkl")
+)
+
+quadratic_model.save(
+    str(MODEL_DIR / "rating_revenue_multiple_quadratic_hc3.pkl")
+)
+
+(MODEL_DIR / "rating_revenue_multiple_summary.txt").write_text(
+    multiple_model.summary().as_text(),
+    encoding="utf-8",
+)
+
+(MODEL_DIR / "rating_revenue_multiple_quadratic_summary.txt").write_text(
+    quadratic_model.summary().as_text(),
+    encoding="utf-8",
+)
+
+pd.Series({
+    "rating_mean": rating_mean,
+    "sample_size": len(data),
+    "minimum_cumulative_reviews": 5,
+    "linear_formula": linear_formula,
+    "quadratic_formula": quadratic_formula,
+}).to_json(
+    MODEL_DIR / "rating_revenue_multiple_metadata.json",
+    indent=2,
+    force_ascii=False,
+)
+
+
+# ==================== Export coefficient tables ====================
+def export_coefficients(model, filename):
+    confidence_interval = model.conf_int()
+
+    results = pd.DataFrame({
+        "Variable": model.params.index,
+        "Coefficient": model.params.values,
+        "Robust_standard_error": model.bse.values,
+        "P_value": model.pvalues.values,
+        "CI_95_lower": confidence_interval.iloc[:, 0].values,
+        "CI_95_upper": confidence_interval.iloc[:, 1].values,
+    })
+
+    results.to_csv(
+        TABLE_DIR / filename,
+        index=False,
+        encoding="utf-8-sig",
+    )
+
+export_coefficients(
+    multiple_model,
+    "rating_revenue_multiple_coefficients.csv",
+)
+
+export_coefficients(
+    quadratic_model,
+    "rating_revenue_multiple_quadratic_coefficients.csv",
+)
+
+
+# ==================== Compare model fit ====================
+comparison = pd.DataFrame({
+    "Model": [
+        "Multiple linear regression",
+        "Multiple regression with quadratic rating",
+    ],
+    "Sample_size": [
+        int(multiple_model.nobs),
+        int(quadratic_model.nobs),
+    ],
+    "R_squared": [
+        multiple_model.rsquared,
+        quadratic_model.rsquared,
+    ],
+    "Adjusted_R_squared": [
+        multiple_model.rsquared_adj,
+        quadratic_model.rsquared_adj,
+    ],
+})
+
+comparison.to_csv(
+    TABLE_DIR / "rating_revenue_multiple_model_comparison.csv",
+    index=False,
+    encoding="utf-8-sig",
+)
+
+print("\nModel comparison")
+print(comparison.round(4).to_string(index=False))
+
+
+# ==================== Interpret the rating coefficient ====================
+coefficient = multiple_model.params["rating"]
+p_value = multiple_model.pvalues["rating"]
+confidence_interval = multiple_model.conf_int().loc["rating"]
+
+print("\nAdjusted rating association")
+print(f"Coefficient: {coefficient:,.2f} AUD per rating point")
+print(f"P-value: {p_value:.6g}")
+print(
+    f"95% confidence interval: "
+    f"[{confidence_interval.iloc[0]:,.2f}, "
+    f"{confidence_interval.iloc[1]:,.2f}]"
+)
+
+print(
+    "Holding area, property type, bedrooms, guest capacity, "
+    "bathrooms and minimum stay constant, a 0.1-point higher "
+    f"rating is associated with {0.1 * coefficient:,.2f} AUD "
+    "difference in fitted annual revenue."
+)
+
+if p_value < 0.05:
+    direction = "positive" if coefficient > 0 else "negative"
+    print(
+        f"The adjusted linear association is statistically "
+        f"significant and {direction} at the 5% level."
+    )
+else:
+    print(
+        "The adjusted linear association is not statistically "
+        "significant at the 5% level."
+    )
+
+
+# ==================== Interpret the curvature check ====================
+squared_term = "I(rating_centered ** 2)"
+curvature_p = quadratic_model.pvalues[squared_term]
+
+print(f"\nSquared-term p-value: {curvature_p:.6g}")
+
+if curvature_p < 0.05:
+    print(
+        "There is evidence of curvature after controlling for "
+        "listing characteristics. A constant rating slope may "
+        "not adequately describe the relationship."
+    )
+else:
+    print(
+        "No statistically significant quadratic curvature was "
+        "detected. This does not prove exact linearity."
+    )
+
+print(
+    "\nThe models describe associations with estimated revenue. "
+    "They do not establish that increasing ratings causes revenue "
+    "to rise, and estimated revenue is not profit."
+)
+
+print(f"\nModels saved in: {MODEL_DIR.resolve()}")
