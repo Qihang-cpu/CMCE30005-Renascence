@@ -2,8 +2,14 @@
 ## Group4-Renascence - AIRBNB
 
 **Subject:** CMCE30005 Business Analytics Challenge, Semester 2 2026
+
 **University:** University of Melbourne
+
 **Team Members:** Qihang Sun, Loc Le
+
+## Download the Report
+
+[Download the full PDF report](./Final%20Report.pdf)
 
 ---
 
@@ -500,29 +506,35 @@ Validation`"]
 
 ### 5.7 D6: Guest Ratings and Estimated Annual Revenue
 
-- **Purpose:** Examine whether guest ratings are associated with estimated annual revenue after accounting for differences in listing characteristics.
+- **Purpose:** Examine whether guest ratings are associated with estimated annual revenue after accounting for listing characteristics, and assess whether the relationship shows quadratic curvature.
 
 - **Method:**
-  - Use multiple linear regression with `log(1 + estimated annual revenue)` as the dependent variable.
+  - Use **multiple linear regression (OLS)** with `annual_revenue`, measured in AUD, as the dependent variable, without a logarithmic transformation.
   - Include the overall guest rating as the main explanatory variable.
-  - Control for area, property type, bedroom count, and guest capacity.
-  - Analyse **7,750 listings**, with standard errors clustered by **3,868 hosts**.
-  - Use a separate eligible sample for this analysis rather than the restricted short-stay price-modelling sample.
+  - Control for **area, property type, bedroom count, guest capacity, bathroom count, and minimum stay**.
+  - Analyse **3,716 eligible listings**. All observations had complete model variables, so no additional listings were excluded due to missing values.
+  - Use **HC3 heteroscedasticity-robust standard errors**.
+  - Fit an additional model containing a centred rating term and its square to assess possible curvature.
 
 - **Main findings:**
-  - The rating coefficient was **2.463**, with a **95% confidence interval of 1.952–2.973** and **p < .001**.
-  - The model explained approximately **9.39%** of the variation in log-transformed estimated annual revenue.
+  - In the linear model, the rating coefficient was **AUD 12,531.19 per rating point**, with a **95% confidence interval of AUD 10,859.71–14,202.66** and **p < .001**.
+  - Holding the included characteristics constant, a **0.1-point higher rating** was associated with approximately **AUD 1,253.12 higher fitted annual revenue**.
+  - The linear model explained **16.66%** of the variation in estimated annual revenue, with an **adjusted R² of 0.1582**.
+  - Adding the quadratic rating term increased **R² to 0.1706** and **adjusted R² to 0.1621**.
+  - However, the squared rating term was **not statistically significant (p = .183)**. The analysis therefore did not detect statistically significant quadratic curvature.
 
-  These results indicate that **higher guest ratings were significantly associated with higher estimated annual revenue after controlling for the included listing characteristics**.
+  These results indicate that **higher guest ratings were significantly associated with higher estimated annual revenue after controlling for the included listing characteristics**. The quadratic model provided only a small improvement in fit and did not establish a curved relationship.
 
-- **Implications:** Guest ratings provide relevant information about estimated revenue differences. However, the model's limited explanatory power means that ratings should be considered alongside other property and operating factors.
+- **Implications:** Guest ratings are a relevant indicator when assessing estimated revenue differences between listings. However, the model's modest explanatory power means that ratings should be considered alongside property characteristics and operating conditions. The results support monitoring guest experience but do not quantify the financial return from a specific service improvement.
 
 - **Limitations:**
-  - Estimated annual revenue is a proxy and does not represent verified revenue or profit.
+  - Estimated annual revenue does not represent verified revenue or profit.
   - The association does not establish that improving ratings causes revenue to increase.
-  - This regression does not directly test the relationship between ratings and nightly listing prices.
+  - The coefficient describes an adjusted association within the analysed sample, rather than a guaranteed revenue increase for an individual listing.
+  - A non-significant quadratic term does not prove that the relationship is exactly linear.
+  - HC3 standard errors address heteroscedasticity but do not explicitly account for dependence between listings managed by the same host.
   - Overall ratings and estimated annual revenue may cover different time periods.
-  - These findings do not establish a revenue-maximising price or justify ranking products by expected profit.
+  - This analysis does not directly test the relationship between ratings and nightly listing prices or establish a revenue-maximising price.
 
 ### 5.8 Outputs
 
@@ -1175,16 +1187,7 @@ The model's ability to match listing prices evaluates the pricing tool only. **T
 
 #### Appendix B: Data Scope and Reproducibility**
 
-**B.1 Analysis Samples**
-
-| Sample | Number of Properties |
-|---|---:|
-| Original listings | 25,728 |
-| Current city-scrape listings | 18,885 |
-| Entire properties | 14,252 |
-| Mainstream short-stay modelling sample | 10,182 |
-
-**B.2 Analysis Windows**
+**B.1 Analysis Windows**
 
 | Component | Period |
 |---|---|
@@ -1196,7 +1199,7 @@ The model's ability to match listing prices evaluates the pricing tool only. **T
 - Calendar records include future dates beyond the calendar analysis window.
 - Analysis windows should not be confused with the full date ranges of the source files.
 
-**B.3 Software Environment**
+**B.2 Software Environment**
 
 | Software | Version |
 |---|---|
@@ -1206,7 +1209,7 @@ The model's ability to match listing prices evaluates the pricing tool only. **T
 | Matplotlib | 3.10.8 |
 | scikit-learn | 1.8.0 |
 
-**B.4 Reproduction Instructions**
+**B.3 Reproduction Instructions**
 
 - Use the same data snapshot to reproduce the reported results.
 - Place the following files alongside the notebook:
